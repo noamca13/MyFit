@@ -1,0 +1,1562 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>מעקב כושר</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;900&family=Assistant:wght@400;500;600;700&display=swap">
+<style id="app-style">
+  :root{
+    --bg:#F5F3ED; --card:#FFFFFF; --text:#171717; --muted:#75726C; --muted2:#5C5A54;
+    --border:#E3E0D6; --divider:#EBE9E0; --track:#E9E7DE;
+    --accent:#4ADE00; --accent-tint:rgba(74,222,0,0.16); --accent-tint2:rgba(74,222,0,0.28);
+    --accent-deep:#2E8A00; --accent-deep-hover:#226600; --accent-onDark:#7DFF3D;
+    --dark:#171717; --dark-onAccent:#16210A; --cardio:#2D6CDF; --danger:#D64545;
+    --shadow:0 1px 3px rgba(0,0,0,0.06); --shadow-lg:0 6px 16px rgba(74,222,0,0.32);
+    --faint:#A9A69B; --dash:#C2BFB2;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);}
+  body{font-family:'Assistant',sans-serif;color:var(--text);direction:rtl;}
+  .hd{font-family:'Heebo',sans-serif;}
+  button{font-family:inherit;}
+  input,select,textarea{font-family:inherit;}
+  #app-shell{max-width:460px;margin:0 auto;min-height:100vh;position:relative;padding:0 18px 110px;}
+  .row{display:flex;align-items:center;}
+  .between{justify-content:space-between;}
+  .card{background:var(--card);border-radius:16px;padding:16px;box-shadow:var(--shadow);}
+  .card-lg{border-radius:18px;padding:18px;}
+  .muted{color:var(--muted);}
+  .iconbtn{width:38px;height:38px;border-radius:11px;background:#FFFFFF;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;flex:none;}
+  .chip{display:inline-flex;align-items:center;gap:6px;border-radius:20px;padding:9px 14px;border:1px solid var(--border);background:#FFFFFF;font-size:12.5px;font-weight:600;color:var(--muted2);cursor:pointer;}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:var(--dark-onAccent);font-weight:700;}
+  .btn-primary{background:var(--accent);border:none;border-radius:16px;padding:15px;text-align:center;font-family:'Heebo',sans-serif;font-weight:800;font-size:15px;color:var(--dark-onAccent);box-shadow:var(--shadow-lg);cursor:pointer;width:100%;}
+  .btn-ghost{border:1.5px dashed var(--dash);border-radius:16px;padding:14px;display:flex;align-items:center;justify-content:center;gap:7px;background:none;color:var(--muted2);font-weight:700;font-size:13px;cursor:pointer;width:100%;}
+  .btn-secondary{background:#F5F4EF;border:none;border-radius:12px;padding:10px 14px;font-weight:700;font-size:12.5px;color:var(--muted2);cursor:pointer;}
+  input[type=number],input[type=text],input[type=date],select,textarea{
+    width:100%;background:#F5F4EF;border:1px solid var(--border);border-radius:10px;padding:9px 10px;
+    font-size:13.5px;color:var(--text);font-weight:600;
+  }
+  textarea{resize:vertical;min-height:44px;font-weight:400;}
+  label.field-label{font-size:11.5px;color:var(--muted);font-weight:600;display:block;margin-bottom:5px;}
+  .field{margin-bottom:12px;}
+  .navbar{position:fixed;right:0;left:0;bottom:0;height:78px;background:#FFFFFF;border-top:1px solid #EFEEE9;
+    display:flex;align-items:center;justify-content:space-around;padding-bottom:14px;max-width:460px;margin:0 auto;z-index:20;}
+  .navitem{display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;cursor:pointer;padding:4px 10px;}
+  .navitem span{font-size:10px;color:var(--faint);}
+  .navitem.active span{color:var(--accent-deep);font-weight:700;}
+  .sticky-footer{position:fixed;right:0;left:0;bottom:0;max-width:460px;margin:0 auto;padding:14px 18px 22px;
+    background:linear-gradient(180deg,rgba(250,249,246,0),var(--bg) 30%);z-index:20;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  .stat-tile{background:var(--card);border-radius:14px;padding:12px 10px;text-align:center;box-shadow:var(--shadow);}
+  .stat-tile .n{font-size:19px;font-weight:900;font-family:'Heebo',sans-serif;}
+  .stat-tile .l{font-size:10.5px;color:var(--muted);margin-top:3px;}
+  svg{display:block;}
+  .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;
+    padding:11px 18px;border-radius:30px;font-size:13px;font-weight:700;z-index:100;box-shadow:0 6px 20px rgba(0,0,0,0.25);
+    opacity:0;pointer-events:none;transition:opacity .25s, transform .25s;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(6px);}
+  .set-row{display:grid;grid-template-columns:22px 1fr 62px 54px 26px;gap:8px;align-items:center;padding:7px 2px;border-top:1px solid var(--divider);}
+  .set-row input{text-align:center;padding:6px 2px;font-size:13px;}
+  .check-circle{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--dash);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;}
+  .check-circle.done{background:var(--accent);border-color:var(--accent);}
+  .ex-card{margin-top:14px;}
+  .settings-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--divider);cursor:pointer;}
+  .settings-row:last-child{border-bottom:none;}
+  .hm-cell{aspect-ratio:1;border-radius:6px;}
+  a{color:var(--accent-deep);}
+  ::placeholder{color:var(--faint);font-weight:400;}
+</style>
+</head>
+<body>
+<div id="app-shell">
+  <div id="app-root"></div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script type="application/json" id="state-data">{"__seed__":true}</script>
+
+<script id="app-logic">
+(function(){
+"use strict";
+
+/* ===================== constants & icons ===================== */
+var MONTHS = ["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"];
+var DAYS_SHORT = ["א","ב","ג","ד","ה","ו","ש"];
+var DAYS_FULL = ["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
+var MUSCLE_LABEL = {chest:"חזה", back:"גב", legs:"רגליים", shoulders:"כתפיים", arms:"ידיים", core:"בטן / core"};
+var MUSCLE_ORDER = ["chest","back","legs","shoulders","arms","core"];
+
+var ICONS = {
+  home:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h5v-5h2v5h5v-9"/></svg>',
+  dumbbell:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8v8M7 6v12M17 6v12M20 8v8M7 12h10"/></svg>',
+  pulse:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-7 4 14 2-7h6"/></svg>',
+  bike:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M6 17l4-8h4l3 8M10 9h4"/></svg>',
+  swim:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M2 16c1.5-2 3.5-2 5 0s3.5 2 5 0 3.5-2 5 0 3.5 2 5 0"/><path d="M2 20c1.5-2 3.5-2 5 0s3.5 2 5 0 3.5-2 5 0 3.5 2 5 0"/></svg>',
+  ruler:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="8" rx="1"/><path d="M7 8v3M11 8v3M15 8v3M19 8v3"/></svg>',
+  trophy:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v4a4 4 0 0 1-8 0V4z"/><path d="M8 5H5a3 3 0 0 0 3 5"/><path d="M16 5h3a3 3 0 0 1-3 5"/><path d="M12 12v4"/><path d="M9 20h6"/><path d="M10 16h4v4h-4z"/></svg>',
+  flame:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C12 2 6 9 6 14a6 6 0 0 0 12 0c0-2-1-3-2-4 .3 1.6-.5 2.6-1.5 2.6-1.4 0-2-1.3-1.5-2.6.6-1.5 1-3 0-8z"/></svg>',
+  trending:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>',
+  back:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
+  fwd:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
+  plus:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>',
+  check:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>',
+  search:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>',
+  calendar:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>',
+  bell:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 4 1.5 5.5 2 6H4c.5-.5 2-2 2-6z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg>',
+  clock:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
+  user:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 20c0-4 3.4-7 7.5-7s7.5 3 7.5 7"/></svg>',
+  pencil:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+  cloud:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17a4 4 0 0 1 .3-8 5 5 0 0 1 9.6-1.7A4 4 0 0 1 17 17H7z"/><path d="M12 11v6M9.3 14.5 12 17l2.7-2.5"/></svg>',
+  info:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01"/><path d="M11 11.5h1.3v5.2H11"/></svg>',
+  template:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 3.3h6v2.6H9z"/><path d="M8.5 11h7M8.5 14.5h7M8.5 18h4.5"/></svg>',
+  trash:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/></svg>',
+  photo:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3.2"/><path d="M8 5l1.5-2h5L16 5"/></svg>',
+  x:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+};
+function icon(name, color, size){
+  var t = ICONS[name] || "";
+  return t.split("{c}").join(color).split("{s}").join(String(size||18));
+}
+
+/* ===================== helpers ===================== */
+function uid(prefix){ return prefix + "_" + Math.random().toString(36).slice(2,9); }
+function pad2(n){ return (n<10?"0":"")+n; }
+function fmtDateHe(iso){
+  var d = new Date(iso);
+  return DAYS_FULL[d.getDay()] + ", " + d.getDate() + " ב" + MONTHS[d.getMonth()];
+}
+function fmtDateShort(iso){
+  var d = new Date(iso);
+  return d.getDate() + " ב" + MONTHS[d.getMonth()];
+}
+function monthLabel(iso){
+  var d = new Date(iso);
+  return MONTHS[d.getMonth()] + " " + d.getFullYear();
+}
+function daysBetween(a,b){
+  var A = new Date(a.getFullYear(),a.getMonth(),a.getDate());
+  var B = new Date(b.getFullYear(),b.getMonth(),b.getDate());
+  return Math.round((A-B)/86400000);
+}
+function isoDateOnly(iso){
+  var d = new Date(iso);
+  return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());
+}
+function combineDateKeepTime(dateStr, oldIso){
+  var old = new Date(oldIso);
+  var parts = dateStr.split("-");
+  if(parts.length!==3) return oldIso;
+  var d = new Date(old);
+  d.setFullYear(+parts[0], +parts[1]-1, +parts[2]);
+  return d.toISOString();
+}
+function fmtHM(mins){
+  var h = Math.floor(mins/60), m = Math.round(mins%60);
+  return h + ":" + pad2(m);
+}
+function fmtNum(n, d){
+  if(n===null||n===undefined||isNaN(n)) return "-";
+  var f = d===undefined?1:d;
+  var v = Math.round(n*Math.pow(10,f))/Math.pow(10,f);
+  return v.toLocaleString("he-IL");
+}
+function fmtVolume(n){
+  if(n>=1000) return (Math.round(n/100)/10).toLocaleString("he-IL")+"K";
+  return Math.round(n).toLocaleString("he-IL");
+}
+function escapeHtml(s){
+  return String(s===undefined||s===null?"":s).replace(/[&<>"']/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+  });
+}
+
+/* ===================== starter data ===================== */
+function buildExerciseLibrary(){
+  return [
+    {id:"bench-press", name:"לחיצת חזה", muscle:"chest"},
+    {id:"incline-db-press", name:"לחיצה בשיפוע עם משקולות", muscle:"chest"},
+    {id:"cable-fly", name:"פרפר בכבלים", muscle:"chest"},
+    {id:"lat-pulldown", name:"משיכת פולי עליון", muscle:"back"},
+    {id:"seated-row", name:"חתירה בישיבה", muscle:"back"},
+    {id:"deadlift", name:"דדליפט", muscle:"back"},
+    {id:"squat", name:"סקוואט", muscle:"legs"},
+    {id:"leg-press", name:"לחיצת רגליים", muscle:"legs"},
+    {id:"lunges", name:"לאנג'ים", muscle:"legs"},
+    {id:"calf-raise", name:"הרמת עקבים", muscle:"legs"},
+    {id:"shoulder-press", name:"לחיצת כתפיים", muscle:"shoulders"},
+    {id:"lateral-raise", name:"הרחקת כתפיים לצד", muscle:"shoulders"},
+    {id:"bicep-curl", name:"כפיפת מרפק", muscle:"arms"},
+    {id:"tricep-pushdown", name:"פשיטת מרפק בפולי", muscle:"arms"},
+    {id:"plank", name:"פלאנק", muscle:"core"},
+    {id:"cable-crunch", name:"כפיפת בטן בכבל", muscle:"core"}
+  ];
+}
+function buildTemplates(){
+  return [
+    {id:"t-a", name:"אימון A — פלג גוף תחתון", exerciseIds:["squat","leg-press","lunges","calf-raise","plank"]},
+    {id:"t-b", name:"אימון B — פלג גוף עליון", exerciseIds:["bench-press","lat-pulldown","shoulder-press","bicep-curl","tricep-pushdown"]}
+  ];
+}
+function generateSeedState(){
+  /* First-run state: only the exercise library and starter templates are pre-filled
+     (scaffolding needed for template-based workout logging to work at all).
+     No workouts or measurements are fabricated — the user enters his own data. */
+  return {
+    profile:{ name:"נעם", weightGoalKg:null, weeklyWorkoutGoal:4, remindersEnabled:false },
+    exercises: buildExerciseLibrary(),
+    templates: buildTemplates(),
+    workouts: [],
+    measurements: [],
+    meta:{ lastTemplateId: "t-a" }
+  };
+}
+
+/* ===================== state & persistence ===================== */
+var state = null;
+var view = "home";
+var draft = null; /* in-progress strength/cardio session, not persisted until finished */
+var cardioTimer = { running:false, seconds:0, intervalId:null };
+var detailWorkoutId = null, workoutEditDraft = null;
+var detailMeasurementId = null, measurementEditDraft = null;
+var editingExerciseId = null;
+var editingTemplateId = null, editingTemplateName = null;
+
+var useClaude = (typeof window!=="undefined" && window.claude && typeof window.claude.use==="function") ? window.claude.use : null;
+
+var wasSeeded = false;
+function loadInitialState(){
+  if(!useClaude){
+    try{
+      var local = localStorage.getItem("fitnessAppState_v1");
+      if(local){
+        var parsedLocal = JSON.parse(local);
+        /* migration: earlier builds seeded fake demo data under the name "נועם" (typo).
+           A real save can never contain that exact value, so if we see it, this is stale
+           demo data left over from an old version — discard it and start fresh instead
+           of showing it as if it were real. */
+        if(!(parsedLocal && parsedLocal.profile && parsedLocal.profile.name==="נועם")){
+          return parsedLocal;
+        }
+        try{ localStorage.removeItem("fitnessAppState_v1"); }catch(e2){}
+      }
+    }catch(e){}
+  }
+  var raw = null;
+  try{ raw = JSON.parse(document.getElementById("state-data").textContent); }catch(e){ raw = {"__seed__":true}; }
+  if(raw && raw.__seed__){
+    wasSeeded = true;
+    return generateSeedState();
+  }
+  return raw;
+}
+
+function buildPublishHTML(newState){
+  var styleSrc = document.getElementById("app-style").textContent;
+  var logicSrc = document.getElementById("app-logic").textContent;
+  var parts = [];
+  parts.push("<!doctype html>");
+  parts.push('<html lang="he" dir="rtl">');
+  parts.push("<head>");
+  parts.push('<meta charset="utf-8">');
+  parts.push('<meta name="viewport" content="width=device-width, initial-scale=1">');
+  parts.push("<title>מעקב כושר</title>");
+  parts.push('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;900&family=Assistant:wght@400;500;600;700&display=swap">');
+  parts.push('<style id="app-style">' + styleSrc + "</" + "style>");
+  parts.push("</head>");
+  parts.push("<body>");
+  parts.push('<div id="app-shell"><div id="app-root"></div></div>');
+  parts.push('<div id="toast" class="toast"></div>');
+  parts.push('<script type="application/json" id="state-data">' + JSON.stringify(newState) + "</" + "script>");
+  parts.push('<script id="app-logic">' + logicSrc + "</" + "script>");
+  parts.push("</body></html>");
+  return parts.join("\n");
+}
+
+var saving = false;
+function persist(mutator, opts){
+  var newState = JSON.parse(JSON.stringify(state));
+  mutator(newState);
+  state = newState;
+  render();
+  doPersist(opts);
+}
+function doPersist(opts){
+  if(saving) return;
+  saving = true;
+  var done = function(){ saving = false; };
+  if(useClaude){
+    useClaude("artifact").then(function(artifact){
+      if(!artifact){ fallbackSave(); done(); return; }
+      var html = buildPublishHTML(state);
+      artifact.publish(html).then(function(){ done(); }).catch(function(){ done(); });
+    }).catch(function(){ fallbackSave(); done(); });
+  } else {
+    fallbackSave();
+    done();
+  }
+}
+function fallbackSave(){
+  try{ localStorage.setItem("fitnessAppState_v1", JSON.stringify(state)); }catch(e){}
+}
+
+function showToast(msg){
+  var t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast show";
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(function(){ t.className="toast"; }, 2200);
+}
+
+/* ===================== computed stats ===================== */
+function muscleOf(exId){
+  var ex = state.exercises.filter(function(e){return e.id===exId;})[0];
+  return ex ? ex.muscle : null;
+}
+function workoutDaySet(){
+  var s = {};
+  state.workouts.forEach(function(w){
+    var d = new Date(w.date);
+    var k = d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate();
+    s[k] = (s[k]||0)+1;
+  });
+  return s;
+}
+function computeStreak(){
+  var days = workoutDaySet();
+  var streak = 0;
+  var cur = new Date();
+  while(true){
+    var k = cur.getFullYear()+"-"+cur.getMonth()+"-"+cur.getDate();
+    if(days[k]){ streak++; cur.setDate(cur.getDate()-1); }
+    else break;
+  }
+  return streak;
+}
+function workoutsInLastDays(n){
+  var now = new Date();
+  return state.workouts.filter(function(w){
+    return daysBetween(now, new Date(w.date)) < n;
+  });
+}
+function computeWeeklyStats(){
+  var wk = workoutsInLastDays(7);
+  var vol = 0, mins = 0;
+  wk.forEach(function(w){
+    mins += w.durationMin||0;
+    if(w.type==="strength") vol += w.totalVolume||0;
+  });
+  return { count: wk.length, volume: vol, hours: fmtHM(mins) };
+}
+function exerciseBestBefore(exId, beforeDate){
+  var best = null;
+  state.workouts.forEach(function(w){
+    if(w.type!=="strength") return;
+    if(new Date(w.date) >= beforeDate) return;
+    w.exercises.forEach(function(e){
+      if(e.exerciseId!==exId) return;
+      e.sets.forEach(function(s){
+        if(s.done && s.weight>0 && (best===null || s.weight>best)) best = s.weight;
+      });
+    });
+  });
+  return best;
+}
+function findRecentPR(){
+  var strength = state.workouts.filter(function(w){return w.type==="strength";})
+    .slice().sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+  for(var i=0;i<strength.length;i++){
+    var w = strength[i];
+    var best = null, bestExName = null;
+    w.exercises.forEach(function(e){
+      var priorBest = exerciseBestBefore(e.exerciseId, new Date(w.date));
+      var sessionMax = 0;
+      e.sets.forEach(function(s){ if(s.done && s.weight>sessionMax) sessionMax = s.weight; });
+      if(sessionMax>0 && (priorBest===null || sessionMax>priorBest)){
+        if(best===null || sessionMax>best){
+          best = sessionMax; bestExName = e.name;
+          w._prDelta = priorBest===null ? sessionMax : (sessionMax-priorBest);
+        }
+      }
+    });
+    if(best!==null){ return {weight:best, name:bestExName, delta:w._prDelta, date:w.date}; }
+  }
+  return null;
+}
+function countTotalPRs(){
+  var byExercise = {};
+  var strength = state.workouts.filter(function(w){return w.type==="strength";})
+    .slice().sort(function(a,b){ return new Date(a.date)-new Date(b.date); });
+  var count = 0;
+  strength.forEach(function(w){
+    w.exercises.forEach(function(e){
+      var sessionMax = 0;
+      e.sets.forEach(function(s){ if(s.done && s.weight>sessionMax) sessionMax = s.weight; });
+      if(sessionMax<=0) return;
+      var prev = byExercise[e.exerciseId] || 0;
+      if(sessionMax>prev){ count++; byExercise[e.exerciseId]=sessionMax; }
+    });
+  });
+  return count;
+}
+function weeklyVolumeBuckets(n){
+  var now = new Date();
+  var buckets = [];
+  for(var i=n-1;i>=0;i--){
+    var start = i*7, end = (i+1)*7;
+    var vol = 0;
+    state.workouts.forEach(function(w){
+      if(w.type!=="strength") return;
+      var db = daysBetween(now, new Date(w.date));
+      if(db>=start && db<end) vol += w.totalVolume||0;
+    });
+    buckets.push(vol);
+  }
+  return buckets;
+}
+function heatmapDays(n){
+  var days = workoutDaySet();
+  var now = new Date();
+  var arr = [];
+  for(var i=n-1;i>=0;i--){
+    var d = new Date(); d.setDate(now.getDate()-i);
+    var k = d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate();
+    arr.push({date:d, count: days[k]||0});
+  }
+  return arr;
+}
+function muscleBalanceWeek(){
+  var wk = workoutsInLastDays(7).filter(function(w){return w.type==="strength";});
+  var counts = {}; MUSCLE_ORDER.forEach(function(m){counts[m]=0;});
+  wk.forEach(function(w){
+    var touched = {};
+    w.exercises.forEach(function(e){
+      var m = muscleOf(e.exerciseId);
+      if(m) touched[m]=true;
+    });
+    Object.keys(touched).forEach(function(m){ counts[m] = (counts[m]||0)+1; });
+  });
+  return counts;
+}
+function mostLoggedExercise(){
+  var counts = {};
+  state.workouts.forEach(function(w){
+    if(w.type!=="strength") return;
+    w.exercises.forEach(function(e){ counts[e.exerciseId]=(counts[e.exerciseId]||0)+1; });
+  });
+  var best=null,bestN=0;
+  Object.keys(counts).forEach(function(k){ if(counts[k]>bestN){bestN=counts[k];best=k;} });
+  return best;
+}
+function exerciseTrend(exId, maxSessions){
+  var out = [];
+  state.workouts.filter(function(w){return w.type==="strength";})
+    .slice().sort(function(a,b){ return new Date(a.date)-new Date(b.date); })
+    .forEach(function(w){
+      w.exercises.forEach(function(e){
+        if(e.exerciseId!==exId) return;
+        var m=0; e.sets.forEach(function(s){ if(s.done && s.weight>m) m=s.weight; });
+        if(m>0) out.push({date:w.date, max:m});
+      });
+    });
+  return out.slice(-maxSessions);
+}
+
+/* ===================== bar/heatmap render helpers ===================== */
+function barsHtml(values, highlightLast){
+  var max = Math.max.apply(null, values.concat([1]));
+  return values.map(function(v,i){
+    var h = Math.max(6, Math.round((v/max)*100));
+    var isLast = highlightLast && i===values.length-1;
+    return '<div style="flex:1;height:'+h+'%;background:'+(isLast?'var(--accent)':'var(--track)')+';border-radius:5px 5px 0 0;"></div>';
+  }).join("");
+}
+function heatmapHtml(){
+  var days = heatmapDays(35);
+  var dowHeader = DAYS_SHORT.map(function(d){ return '<div style="text-align:center;font-size:9.5px;color:var(--faint);font-weight:700;">'+d+'</div>'; }).join("");
+  var lead = days[0].date.getDay();
+  var cells = [];
+  for(var i=0;i<lead;i++) cells.push('<div class="hm-cell" style="background:transparent;"></div>');
+  days.forEach(function(d){
+    var bg = d.count<=0 ? "var(--track)" : d.count===1 ? "rgba(74,222,0,0.35)" : d.count===2 ? "rgba(74,222,0,0.65)" : "var(--accent)";
+    cells.push('<div class="hm-cell" style="background:'+bg+';" title="'+fmtDateShort(d.date.toISOString())+'"></div>');
+  });
+  return '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:5px;">'+dowHeader+'</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;">'+cells.join("")+'</div>';
+}
+
+/* ===================== views ===================== */
+function viewHeaderMain(title, subtitle, rightIconName, rightAction){
+  return '<div class="row between" style="padding:26px 0 6px;">'+
+    '<div><div class="muted" style="font-size:13px;">'+escapeHtml(subtitle)+'</div>'+
+    '<div class="hd" style="font-size:21px;font-weight:900;margin-top:2px;">'+escapeHtml(title)+'</div></div>'+
+    '<button class="iconbtn" style="width:40px;height:40px;" data-action="'+rightAction+'">'+icon(rightIconName,"#171717",18)+'</button>'+
+    '</div>';
+}
+function viewHeaderSub(title, rightHtml, backTarget){
+  return '<div class="row between" style="padding:26px 0 6px;">'+
+    '<div class="row" style="gap:12px;">'+
+    '<button class="iconbtn" data-action="nav" data-view="'+(backTarget||"home")+'">'+icon("back","#171717",17)+'</button>'+
+    '<div class="hd" style="font-size:19px;font-weight:900;">'+escapeHtml(title)+'</div>'+
+    '</div>'+(rightHtml||'')+'</div>';
+}
+
+function renderHome(){
+  var streak = computeStreak();
+  var wk = computeWeeklyStats();
+  var pr = findRecentPR();
+  var trend = weeklyVolumeBuckets(6);
+  var html = "";
+  html += viewHeaderMain("הסטטוס שלך היום", "היי, "+ (state.profile.name||"") , "user", "open-profile");
+
+  html += '<div class="card-lg" style="margin-top:14px;background:var(--accent);display:flex;align-items:center;gap:14px;box-shadow:var(--shadow-lg);">'+
+    '<div style="width:44px;height:44px;border-radius:13px;background:rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:center;flex:none;">'+icon("flame","#16210A",22)+'</div>'+
+    '<div style="flex:1;color:var(--dark-onAccent);"><div class="hd" style="font-size:21px;font-weight:900;line-height:1;">'+streak+' ימים ברצף</div>'+
+    '<div style="font-size:12.5px;opacity:.72;margin-top:5px;">'+(streak>0?"כל הכבוד! תמשיך ככה":"בוא נתחיל רצף חדש")+'</div></div></div>';
+
+  html += '<div class="grid3" style="margin-top:14px;">'+
+    '<div class="stat-tile"><div class="n">'+wk.count+'</div><div class="l">אימונים השבוע</div></div>'+
+    '<div class="stat-tile"><div class="n">'+fmtVolume(wk.volume)+'</div><div class="l">ק"ג נפח כולל</div></div>'+
+    '<div class="stat-tile"><div class="n">'+wk.hours+'</div><div class="l">שעות אימון</div></div>'+
+    '</div>';
+
+  html += '<div style="margin-top:18px;"><div style="font-size:13px;font-weight:700;margin-bottom:9px;">התחל עכשיו</div>'+
+    '<div class="grid3">'+
+    qa("dumbbell","var(--accent-deep)","rgba(74,222,0,0.18)","אימון כוח","start-strength")+
+    qa("pulse","var(--cardio)","rgba(45,108,223,0.1)","אימון אירובי","start-cardio")+
+    qa("ruler","#171717","rgba(23,23,23,0.06)","מדידה חדשה","start-measurement")+
+    '</div></div>';
+
+  if(pr){
+    html += '<div class="card" style="margin-top:16px;background:var(--dark);display:flex;align-items:center;gap:12px;">'+
+      icon("trophy","#FFFFFF",26)+
+      '<div style="flex:1;color:#fff;"><div style="font-size:11.5px;color:var(--accent-onDark);font-weight:700;">שיא אישי חדש</div>'+
+      '<div class="hd" style="font-size:14.5px;font-weight:800;margin-top:2px;">'+escapeHtml(pr.name)+' — '+fmtNum(pr.weight)+' ק"ג</div></div>'+
+      '<div class="row" style="gap:3px;background:rgba(255,255,255,0.14);border-radius:20px;padding:5px 9px;">'+icon("trending","#FFFFFF",12)+
+      '<span class="hd" style="font-size:12px;font-weight:800;color:#fff;">'+fmtNum(pr.delta)+'</span></div></div>';
+  }
+
+  html += '<div class="card" style="margin-top:16px;">'+
+    '<div class="row between" style="margin-bottom:14px;"><div style="font-size:13px;font-weight:700;">נפח אימון — 6 שבועות אחרונים</div>'+icon("trending","#9C9B94",16)+'</div>'+
+    '<div class="row" style="align-items:flex-end;gap:8px;height:64px;">'+barsHtml(trend,true)+'</div></div>';
+
+  root().innerHTML = html;
+}
+function qa(iconName,color,tint,label,action){
+  return '<button class="card" style="border:none;cursor:pointer;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:8px;" data-action="'+action+'">'+
+    '<div style="width:36px;height:36px;border-radius:10px;background:'+tint+';display:flex;align-items:center;justify-content:center;">'+icon(iconName,color,18)+'</div>'+
+    '<div style="font-size:11.5px;font-weight:600;text-align:center;">'+label+'</div></button>';
+}
+
+function renderHistory(){
+  var filter = view==="history" ? (historyFilter||"all") : "all";
+  var html = viewHeaderMain("אימונים", state.workouts.length+" אימונים מתועדים", "search", "noop");
+  html += '<div class="row" style="gap:8px;margin-top:14px;">'+
+    '<button class="chip'+(filter==="all"?" on":"")+'" data-action="filter-history" data-filter="all">הכל</button>'+
+    '<button class="chip'+(filter==="strength"?" on":"")+'" data-action="filter-history" data-filter="strength">'+icon("dumbbell", filter==="strength"?"#16210A":"#75726C",14)+' כוח</button>'+
+    '<button class="chip'+(filter==="cardio"?" on":"")+'" data-action="filter-history" data-filter="cardio">'+icon("pulse", filter==="cardio"?"#16210A":"#75726C",14)+' אירובי</button>'+
+    '</div>';
+
+  var list = state.workouts.filter(function(w){ return filter==="all" || w.type===filter; });
+  if(list.length===0){
+    html += '<div class="muted" style="text-align:center;margin-top:40px;font-size:13px;">אין עדיין אימונים מהסוג הזה</div>';
+  }
+  var lastMonth = null;
+  list.forEach(function(w){
+    var ml = monthLabel(w.date);
+    if(ml!==lastMonth){
+      html += '<div style="font-size:12px;font-weight:700;color:var(--muted);margin-top:22px;margin-bottom:10px;">'+ml+'</div>';
+      lastMonth = ml;
+    }
+    var isStrength = w.type==="strength";
+    var iconName = isStrength ? "dumbbell" : (w.activity==="cycling"?"bike": w.activity==="swimming"?"swim":"pulse");
+    var color = isStrength ? "var(--accent-deep)" : "var(--cardio)";
+    var tint = isStrength ? "rgba(74,222,0,0.16)" : "rgba(45,108,223,0.12)";
+    var title = isStrength ? w.templateName : activityLabel(w.activity);
+    var big = isStrength ? fmtVolume(w.totalVolume) : fmtNum(w.distanceKm,2);
+    var small = isStrength ? 'ק"ג נפח' : 'ק"מ';
+    html += '<div class="card" style="margin-top:10px;padding:12px 14px;display:flex;align-items:center;gap:12px;" data-action="view-workout" data-id="'+w.id+'">'+
+      '<div style="width:38px;height:38px;border-radius:11px;background:'+tint+';display:flex;align-items:center;justify-content:center;flex:none;">'+icon(iconName,color,18)+'</div>'+
+      '<div style="flex:1;min-width:0;"><div style="font-size:13.5px;font-weight:700;">'+escapeHtml(title)+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-top:2px;">'+fmtDateHe(w.date)+' · '+w.durationMin+' דק׳</div></div>'+
+      '<div style="text-align:left;flex:none;"><div class="hd" style="font-size:13px;font-weight:800;">'+big+'</div>'+
+      '<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+small+'</div></div></div>';
+  });
+
+  root().innerHTML = html;
+}
+function activityLabel(a){
+  return {running:"ריצה", cycling:"רכיבה על אופניים", swimming:"שחייה"}[a] || "פעילות אירובית";
+}
+
+/* ===================== workout detail / edit ===================== */
+function openWorkoutDetail(id){
+  var w = state.workouts.filter(function(x){return x.id===id;})[0];
+  if(!w) return;
+  detailWorkoutId = id;
+  workoutEditDraft = JSON.parse(JSON.stringify(w));
+  view = "workout-detail";
+  render();
+}
+function renderWorkoutDetail(){
+  var w = workoutEditDraft;
+  if(!w){ view="history"; render(); return; }
+  var isStrength = w.type==="strength";
+  var html = viewHeaderSub(isStrength ? "אימון כוח" : activityLabel(w.activity), "", "history");
+
+  html += '<div class="card" style="margin-top:14px;">'+
+    '<div class="field" style="margin-bottom:10px;"><label class="field-label">תאריך</label>'+
+    '<input type="date" value="'+isoDateOnly(w.date)+'" data-action="wk-field" data-field="date"></div>'+
+    '<div class="field" style="margin-bottom:0;"><label class="field-label">משך (דקות)</label>'+
+    '<input type="number" step="1" value="'+w.durationMin+'" data-action="wk-field" data-field="durationMin"></div>'+
+    '</div>';
+
+  if(isStrength){
+    var tplKnown = state.templates.some(function(t){return t.name===w.templateName;});
+    html += '<div class="field" style="margin-top:12px;"><label class="field-label">תבנית</label>'+
+      '<select data-action="wk-field" data-field="templateName" style="background:#F5F4EF;">'+
+      (tplKnown?"":'<option value="'+escapeHtml(w.templateName)+'" selected>'+escapeHtml(w.templateName)+'</option>')+
+      state.templates.map(function(t){ return '<option value="'+escapeHtml(t.name)+'"'+(t.name===w.templateName?" selected":"")+'>'+escapeHtml(t.name)+'</option>'; }).join("")+
+      '</select></div>';
+
+    w.exercises.forEach(function(ex, exIdx){
+      html += '<div class="card ex-card"><div class="row between" style="margin-bottom:10px;">'+
+        '<div class="row" style="gap:10px;">'+
+        '<div style="width:34px;height:34px;border-radius:10px;background:var(--accent-tint);display:flex;align-items:center;justify-content:center;flex:none;">'+icon("dumbbell","var(--accent-deep)",17)+'</div>'+
+        '<div style="font-size:14.5px;font-weight:700;">'+escapeHtml(ex.name)+'</div></div>'+
+        '<button data-action="wk-remove-exercise" data-ex="'+exIdx+'" style="background:none;border:none;cursor:pointer;">'+icon("trash","#A9A69B",15)+'</button></div>';
+
+      html += '<div style="display:grid;grid-template-columns:22px 1fr 62px 26px;gap:8px;padding:0 2px 6px;">'+
+        '<div style="font-size:10px;color:var(--faint);font-weight:700;">#</div>'+
+        '<div style="font-size:10px;color:var(--faint);font-weight:700;text-align:center;">ק"ג</div>'+
+        '<div style="font-size:10px;color:var(--faint);font-weight:700;text-align:center;">חזרות</div><div></div></div>';
+
+      ex.sets.forEach(function(s, setIdx){
+        html += '<div style="display:grid;grid-template-columns:22px 1fr 62px 26px;gap:8px;align-items:center;padding:7px 2px;border-top:1px solid var(--divider);">'+
+          '<div style="font-size:12.5px;font-weight:700;color:var(--muted);">'+(setIdx+1)+'</div>'+
+          '<input type="number" step="0.5" inputmode="decimal" value="'+s.weight+'" data-action="wk-set-field" data-ex="'+exIdx+'" data-set="'+setIdx+'" data-field="weight" style="text-align:center;padding:6px 2px;font-size:13px;">'+
+          '<input type="number" step="1" inputmode="numeric" value="'+s.reps+'" data-action="wk-set-field" data-ex="'+exIdx+'" data-set="'+setIdx+'" data-field="reps" style="text-align:center;padding:6px 2px;font-size:13px;">'+
+          '<button data-action="wk-remove-set" data-ex="'+exIdx+'" data-set="'+setIdx+'" style="background:none;border:none;cursor:pointer;">'+icon("x","#A9A69B",13)+'</button>'+
+          '</div>';
+      });
+
+      html += '<div class="row" style="gap:6px;margin-top:8px;padding-top:9px;border-top:1px solid var(--divider);cursor:pointer;" data-action="wk-add-set" data-ex="'+exIdx+'">'+
+        icon("plus","var(--accent-deep)",14)+'<span style="font-size:12.5px;font-weight:700;color:var(--accent-deep);">הוסף סט</span></div></div>';
+    });
+  } else {
+    var acts = [["running","ריצה"],["cycling","אופניים"],["swimming","שחייה"]];
+    html += '<div class="row" style="gap:8px;margin-top:12px;">'+acts.map(function(a){
+      var on = w.activity===a[0];
+      return '<button class="chip'+(on?" on":"")+'" data-action="wk-set-activity" data-activity="'+a[0]+'">'+a[1]+'</button>';
+    }).join("")+'</div>';
+
+    html += '<div class="card" style="margin-top:12px;"><label class="field-label">מרחק (ק"מ)</label>'+
+      '<input type="number" step="0.01" inputmode="decimal" value="'+w.distanceKm+'" data-action="wk-field" data-field="distanceKm" style="font-family:Heebo;font-size:20px;font-weight:900;"></div>';
+
+    html += '<div class="card" style="margin-top:12px;"><label class="field-label">הערות</label>'+
+      '<textarea data-action="wk-field" data-field="notes">'+escapeHtml(w.notes||"")+'</textarea></div>';
+  }
+
+  html += '<div style="margin-top:18px;"><button class="btn-primary" data-action="save-workout-edit">שמור שינויים</button></div>';
+  html += '<div style="margin-top:10px;"><button class="btn-ghost" style="border-color:var(--danger);color:var(--danger);" data-action="delete-workout" data-id="'+w.id+'">'+icon("trash","var(--danger)",15)+' מחק אימון</button></div>';
+  html += '<div style="height:20px;"></div>';
+
+  root().innerHTML = html;
+}
+function saveWorkoutEdit(){
+  var w = workoutEditDraft;
+  if(w.type==="strength"){
+    var totalVolume = 0;
+    w.exercises.forEach(function(ex){
+      ex.sets.forEach(function(s){
+        s.weight = parseFloat(s.weight)||0; s.reps = parseInt(s.reps,10)||0;
+        totalVolume += s.weight*s.reps;
+      });
+    });
+    w.totalVolume = totalVolume;
+    var matchTpl = state.templates.filter(function(t){return t.name===w.templateName;})[0];
+    if(matchTpl) w.templateId = matchTpl.id;
+  } else {
+    w.distanceKm = parseFloat(w.distanceKm)||0;
+    w.avgPaceMinPerKm = w.distanceKm>0 ? w.durationMin/w.distanceKm : 0;
+  }
+  w.durationMin = parseInt(w.durationMin,10)||1;
+  var id = w.id;
+  persist(function(s){
+    var idx = s.workouts.findIndex(function(x){return x.id===id;});
+    if(idx>=0) s.workouts[idx] = w;
+    s.workouts.sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+  });
+  detailWorkoutId=null; workoutEditDraft=null; view="history"; render();
+  showToast("האימון עודכן");
+}
+function deleteWorkout(id){
+  var ok = window.confirm ? window.confirm("למחוק את האימון הזה לצמיתות?") : true;
+  if(!ok) return;
+  persist(function(s){ s.workouts = s.workouts.filter(function(w){return w.id!==id;}); });
+  detailWorkoutId=null; workoutEditDraft=null; view="history"; render();
+  showToast("האימון נמחק");
+}
+
+/* ===================== strength logging ===================== */
+var historyFilter = "all";
+var workoutStartedAt = null;
+
+function startStrengthDraft(templateId){
+  var tpl = state.templates.filter(function(t){return t.id===templateId;})[0] || state.templates[0];
+  if(!tpl){ showToast("אין תבניות אימון עדיין"); return; }
+  workoutStartedAt = new Date();
+  draft = {
+    templateId: tpl.id, templateName: tpl.name,
+    exercises: tpl.exerciseIds.map(function(exId){ return buildDraftExercise(exId); })
+  };
+  view = "strength";
+  render();
+}
+function buildDraftExercise(exId){
+  var ex = state.exercises.filter(function(e){return e.id===exId;})[0];
+  var prevSets = lastSessionSets(exId);
+  var sets = (prevSets.length?prevSets:[{},{},{}]).map(function(){ return {weight:"", reps:"", done:false}; });
+  return { exerciseId: exId, name: ex?ex.name:exId, prevSets: prevSets, sets: sets };
+}
+function lastSessionSets(exId){
+  var strength = state.workouts.filter(function(w){return w.type==="strength";})
+    .slice().sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+  for(var i=0;i<strength.length;i++){
+    var match = strength[i].exercises.filter(function(e){return e.exerciseId===exId;})[0];
+    if(match) return match.sets;
+  }
+  return [];
+}
+function renderStrength(){
+  if(!draft){ view="home"; render(); return; }
+  var elapsedMin = workoutStartedAt ? Math.max(0, Math.round((new Date()-workoutStartedAt)/60000)) : 0;
+  var timeStr = fmtHM(elapsedMin);
+  var html = '<div class="row between" style="padding:26px 0 6px;">'+
+    '<div class="row" style="gap:12px;"><button class="iconbtn" data-action="cancel-strength">'+icon("back","#171717",17)+'</button>'+
+    '<div class="hd" style="font-size:19px;font-weight:900;">אימון כוח</div></div>'+
+    '<div class="row" style="gap:5px;background:var(--dark);border-radius:20px;padding:7px 12px;">'+icon("clock","var(--accent-onDark)",13)+
+    '<span class="hd" style="font-size:12.5px;font-weight:800;color:#fff;">'+timeStr+'</span></div></div>';
+
+  html += '<div class="row between" style="margin-top:10px;">'+
+    '<div style="font-size:13.5px;font-weight:700;">'+escapeHtml(draft.templateName)+'</div>'+
+    '<select data-action="switch-template" style="width:auto;background:none;border:none;color:var(--accent-deep);font-weight:700;font-size:12px;">'+
+    state.templates.map(function(t){ return '<option value="'+t.id+'"'+(t.id===draft.templateId?" selected":"")+'>'+escapeHtml(t.name)+'</option>'; }).join("")+
+    '</select></div>';
+
+  draft.exercises.forEach(function(ex, exIdx){
+    html += '<div class="card ex-card"><div class="row" style="gap:10px;margin-bottom:10px;">'+
+      '<div style="width:34px;height:34px;border-radius:10px;background:var(--accent-tint);display:flex;align-items:center;justify-content:center;flex:none;">'+icon("dumbbell","var(--accent-deep)",17)+'</div>'+
+      '<div style="flex:1;"><div style="font-size:14.5px;font-weight:700;">'+escapeHtml(ex.name)+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-top:1px;">'+ex.sets.length+' סטים</div></div>'+
+      '<button data-action="remove-exercise" data-idx="'+exIdx+'" style="background:none;border:none;cursor:pointer;">'+icon("x","#9C9B94",15)+'</button></div>';
+
+    html += '<div style="display:grid;grid-template-columns:22px 1fr 62px 54px 26px;gap:8px;padding:0 2px 6px;">'+
+      '<div style="font-size:10px;color:var(--faint);font-weight:700;">#</div>'+
+      '<div style="font-size:10px;color:var(--faint);font-weight:700;">קודם</div>'+
+      '<div style="font-size:10px;color:var(--faint);font-weight:700;text-align:center;">ק"ג</div>'+
+      '<div style="font-size:10px;color:var(--faint);font-weight:700;text-align:center;">חזרות</div><div></div></div>';
+
+    ex.sets.forEach(function(s, setIdx){
+      var prev = ex.prevSets[setIdx];
+      var prevStr = prev ? (fmtNum(prev.weight)+" × "+prev.reps) : "—";
+      html += '<div class="set-row">'+
+        '<div style="font-size:12.5px;font-weight:700;color:var(--muted);">'+(setIdx+1)+'</div>'+
+        '<div style="font-size:11.5px;color:var(--faint);">'+prevStr+'</div>'+
+        '<input type="number" step="0.5" inputmode="decimal" placeholder="'+(prev?fmtNum(prev.weight):"-")+'" value="'+(s.weight===""?"":s.weight)+'" data-action="set-input" data-ex="'+exIdx+'" data-set="'+setIdx+'" data-field="weight">'+
+        '<input type="number" step="1" inputmode="numeric" placeholder="'+(prev?prev.reps:"-")+'" value="'+(s.reps===""?"":s.reps)+'" data-action="set-input" data-ex="'+exIdx+'" data-set="'+setIdx+'" data-field="reps">'+
+        '<div class="check-circle'+(s.done?" done":"")+'" data-action="toggle-set" data-ex="'+exIdx+'" data-set="'+setIdx+'">'+(s.done?icon("check","#16210A",12):"")+'</div>'+
+        '</div>';
+    });
+
+    html += '<div class="row" style="gap:6px;margin-top:8px;padding-top:9px;border-top:1px solid var(--divider);cursor:pointer;" data-action="add-set" data-ex="'+exIdx+'">'+
+      icon("plus","var(--accent-deep)",14)+'<span style="font-size:12.5px;font-weight:700;color:var(--accent-deep);">הוסף סט</span></div></div>';
+  });
+
+  html += '<div style="margin-top:14px;">'+
+    '<select data-action="add-exercise-select" style="margin-bottom:8px;">'+
+    '<option value="">+ הוסף תרגיל מהספרייה…</option>'+
+    state.exercises.filter(function(e){ return !draft.exercises.some(function(de){return de.exerciseId===e.id;}); })
+      .map(function(e){ return '<option value="'+e.id+'">'+escapeHtml(e.name)+' ('+MUSCLE_LABEL[e.muscle]+')</option>'; }).join("")+
+    '</select></div>';
+
+  html += '<div style="height:90px;"></div>';
+  html += '<div class="sticky-footer"><button class="btn-primary" data-action="finish-strength">סיים אימון</button></div>';
+
+  root().innerHTML = html;
+}
+
+/* ===================== cardio logging ===================== */
+function startCardioDraft(){
+  draft = { activity:"running", distanceKm:"", durationSec:0, notes:"" };
+  cardioTimer.running=false; cardioTimer.seconds=0;
+  if(cardioTimer.intervalId){ clearInterval(cardioTimer.intervalId); cardioTimer.intervalId=null; }
+  view="cardio";
+  render();
+}
+function renderCardio(){
+  if(!draft){ view="home"; render(); return; }
+  var secs = draft.durationSec||0;
+  var h=Math.floor(secs/3600), m=Math.floor((secs%3600)/60), s=secs%60;
+  var timeStr = pad2(h)+":"+pad2(m)+":"+pad2(s);
+  var dist = parseFloat(draft.distanceKm)||0;
+  var paceMin = dist>0 ? (secs/60)/dist : 0;
+  var paceStr = paceMin>0 ? Math.floor(paceMin)+":"+pad2(Math.round((paceMin%1)*60)) : "—";
+
+  var acts = [["running","pulse","ריצה"],["cycling","bike","אופניים"],["swimming","swim","שחייה"]];
+  var html = '<div class="row" style="gap:12px;padding:26px 0 6px;">'+
+    '<button class="iconbtn" data-action="cancel-cardio">'+icon("back","#171717",17)+'</button>'+
+    '<div class="hd" style="font-size:19px;font-weight:900;">אימון אירובי</div></div>';
+
+  html += '<div class="row" style="gap:8px;margin-top:14px;">'+acts.map(function(a){
+    var on = draft.activity===a[0];
+    return '<button class="chip'+(on?" on":"")+'" data-action="set-activity" data-activity="'+a[0]+'">'+icon(a[1], on?"#16210A":"#75726C",15)+' '+a[2]+'</button>';
+  }).join("")+'</div>';
+
+  html += '<div class="card-lg" style="margin-top:14px;text-align:center;">'+
+    '<div class="muted" style="font-size:12px;font-weight:600;">משך זמן</div>'+
+    '<div class="hd" id="timerDisplay" style="font-size:40px;font-weight:900;margin-top:6px;letter-spacing:1px;">'+timeStr+'</div>'+
+    '<div class="row" style="justify-content:center;gap:10px;margin-top:12px;">'+
+    '<button class="btn-secondary" data-action="timer-toggle">'+(cardioTimer.running?"השהה":"התחל")+'</button>'+
+    '<button class="btn-secondary" data-action="timer-reset">איפוס</button></div></div>';
+
+  html += '<div class="grid2" style="margin-top:12px;">'+
+    '<div class="card"><div class="muted" style="font-size:11px;font-weight:600;">מרחק</div>'+
+    '<div class="row" style="align-items:baseline;gap:4px;margin-top:5px;">'+
+    '<input type="number" step="0.01" inputmode="decimal" value="'+draft.distanceKm+'" placeholder="0.00" data-action="cardio-field" data-field="distanceKm" style="width:70px;background:none;border:none;padding:0;font-family:Heebo;font-size:22px;font-weight:900;">'+
+    '<span class="muted" style="font-size:12px;font-weight:600;">ק"מ</span></div></div>'+
+    '<div class="card"><div class="muted" style="font-size:11px;font-weight:600;">קצב ממוצע</div>'+
+    '<div class="row" style="align-items:baseline;gap:4px;margin-top:5px;">'+
+    '<span class="hd" id="paceDisplay" style="font-size:22px;font-weight:900;">'+paceStr+'</span><span class="muted" style="font-size:12px;font-weight:600;">/ק"מ</span></div></div>'+
+    '</div>';
+
+  html += '<div class="card" style="margin-top:12px;"><label class="field-label">הערות</label>'+
+    '<textarea placeholder="איך הרגשת? (אופציונלי)" data-action="cardio-field" data-field="notes">'+escapeHtml(draft.notes)+'</textarea></div>';
+
+  html += '<div style="height:90px;"></div>';
+  html += '<div class="sticky-footer"><button class="btn-primary" data-action="finish-cardio">שמור אימון</button></div>';
+
+  root().innerHTML = html;
+}
+
+/* ===================== measurements ===================== */
+var MEAS_FIELDS = [
+  ["chest","חזה"], ["waist","מותן / בטן"], ["arm_r","יד ימין"], ["arm_l","יד שמאל"],
+  ["forearm_r","אמה ימין"], ["forearm_l","אמה שמאל"], ["thigh_r","ירך ימין"], ["thigh_l","ירך שמאל"],
+  ["calf_r","שוק ימין"], ["calf_l","שוק שמאל"]
+];
+function lastMeasurement(){
+  var ms = state.measurements.slice().sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+  return ms[0]||null;
+}
+function renderMeasurementsTab(){
+  var last = lastMeasurement();
+  var ms = state.measurements.slice().sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+  var html = viewHeaderMain("מדידות", ms.length+" מדידות מתועדות", "search", "noop");
+
+  if(last){
+    var prevIdx = ms.indexOf(last)+1;
+    var prev = ms[prevIdx];
+    var delta = prev ? (last.weightKg - prev.weightKg) : null;
+    html += '<div class="card-lg" style="margin-top:14px;">'+
+      '<div class="row between"><div class="muted" style="font-size:12px;font-weight:600;">משקל נוכחי</div>'+
+      (delta!==null?'<div class="row" style="gap:3px;background:var(--accent-tint);border-radius:20px;padding:4px 9px;">'+
+        icon("trending", "var(--accent-deep)", 11)+'<span class="hd" style="font-size:11.5px;font-weight:800;color:var(--accent-deep);">'+fmtNum(Math.abs(delta))+'</span></div>':'')+
+      '</div><div class="row" style="align-items:baseline;gap:6px;margin-top:8px;">'+
+      '<span class="hd" style="font-size:40px;font-weight:900;">'+fmtNum(last.weightKg)+'</span><span class="muted" style="font-size:14px;font-weight:600;">ק"ג</span></div>'+
+      (last.bodyFatPct?'<div class="row between" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--divider);">'+
+        '<span style="font-size:12.5px;color:var(--muted2);font-weight:600;">אחוז שומן</span>'+
+        '<span class="hd" style="font-size:15px;font-weight:800;">'+fmtNum(last.bodyFatPct)+'%</span></div>':'')+
+      '<div class="muted" style="font-size:11px;margin-top:10px;">עודכן '+fmtDateShort(last.date)+'</div>'+
+      '</div>';
+  } else {
+    html += '<div class="muted" style="text-align:center;margin-top:30px;font-size:13px;">עדיין לא נוספה אף מדידה</div>';
+  }
+
+  html += '<div style="margin-top:16px;"><button class="btn-primary" data-action="start-measurement">+ מדידה חדשה</button></div>';
+
+  if(ms.length>0){
+    html += '<div style="font-size:13px;font-weight:700;margin-top:22px;margin-bottom:10px;">היסטוריה</div>';
+    ms.slice(0,10).forEach(function(m, i){
+      var p = ms[i+1];
+      var d = p ? (m.weightKg-p.weightKg) : null;
+      html += '<div class="card" style="margin-top:8px;padding:11px 14px;" data-action="view-measurement" data-id="'+m.id+'">'+
+        '<div class="row between"><div style="font-size:13px;font-weight:700;">'+fmtDateHe(m.date)+'</div>'+
+        '<div class="row" style="gap:6px;"><span class="hd" style="font-size:13px;font-weight:800;">'+fmtNum(m.weightKg)+' ק"ג</span>'+
+        (d!==null?'<span style="font-size:11px;color:'+(d<0?"var(--accent-deep)":d>0?"var(--muted2)":"var(--faint)")+';font-weight:700;">('+(d>0?"+":"")+fmtNum(d)+')</span>':'')+
+        '</div></div></div>';
+    });
+  }
+
+  root().innerHTML = html;
+}
+function startMeasurementDraft(){
+  var last = lastMeasurement();
+  draft = { weightKg:"", bodyFatPct:"" };
+  MEAS_FIELDS.forEach(function(f){ draft[f[0]] = ""; });
+  draft._last = last;
+  view = "measurement-form";
+  render();
+}
+function renderMeasurementForm(){
+  var last = draft._last;
+  var html = viewHeaderSub("מדידה חדשה", '<div class="chip" style="cursor:default;">'+icon("calendar","#75726C",13)+' היום</div>', "measurements");
+
+  html += '<div class="card-lg" style="margin-top:12px;">'+
+    '<label class="field-label">משקל (ק"ג)</label>'+
+    '<input type="number" step="0.1" inputmode="decimal" placeholder="'+(last?fmtNum(last.weightKg):"0.0")+'" value="'+draft.weightKg+'" data-action="meas-field" data-field="weightKg" style="font-family:Heebo;font-size:26px;font-weight:900;background:none;border:none;padding:4px 0;">'+
+    '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--divider);">'+
+    '<label class="field-label">אחוז שומן (%) — אופציונלי</label>'+
+    '<input type="number" step="0.1" inputmode="decimal" placeholder="'+(last&&last.bodyFatPct?fmtNum(last.bodyFatPct):"-")+'" value="'+draft.bodyFatPct+'" data-action="meas-field" data-field="bodyFatPct">'+
+    '</div></div>';
+
+  html += '<div style="font-size:13.5px;font-weight:700;margin-top:18px;margin-bottom:10px;">היקפי גוף (ס"מ) — אופציונלי</div>';
+  html += '<div class="grid2">'+MEAS_FIELDS.map(function(f){
+    var ph = last && last[f[0]] ? fmtNum(last[f[0]]) : 'ס"מ';
+    return '<div class="card" style="padding:11px 13px;"><div class="muted" style="font-size:11px;font-weight:600;">'+f[1]+'</div>'+
+      '<input type="number" step="0.1" inputmode="decimal" placeholder="'+ph+'" value="'+draft[f[0]]+'" data-action="meas-field" data-field="'+f[0]+'" style="margin-top:5px;background:none;border:none;padding:0;font-family:Heebo;font-size:16px;font-weight:800;">'+
+      '</div>';
+  }).join("")+'</div>';
+
+  html += '<div style="height:90px;"></div>';
+  html += '<div class="sticky-footer"><button class="btn-primary" data-action="finish-measurement">שמור מדידה</button></div>';
+  root().innerHTML = html;
+}
+
+function openMeasurementDetail(id){
+  var m = state.measurements.filter(function(x){return x.id===id;})[0];
+  if(!m) return;
+  detailMeasurementId = id;
+  measurementEditDraft = JSON.parse(JSON.stringify(m));
+  view = "measurement-detail";
+  render();
+}
+function renderMeasurementDetail(){
+  var m = measurementEditDraft;
+  if(!m){ view="measurements"; render(); return; }
+  var html = viewHeaderSub("עריכת מדידה", "", "measurements");
+
+  html += '<div class="card-lg" style="margin-top:12px;">'+
+    '<div class="field"><label class="field-label">תאריך</label>'+
+    '<input type="date" value="'+isoDateOnly(m.date)+'" data-action="meas-edit-field" data-field="date"></div>'+
+    '<label class="field-label">משקל (ק"ג)</label>'+
+    '<input type="number" step="0.1" inputmode="decimal" value="'+(m.weightKg===undefined?"":m.weightKg)+'" data-action="meas-edit-field" data-field="weightKg" style="font-family:Heebo;font-size:26px;font-weight:900;background:none;border:none;padding:4px 0;">'+
+    '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--divider);">'+
+    '<label class="field-label">אחוז שומן (%) — אופציונלי</label>'+
+    '<input type="number" step="0.1" inputmode="decimal" value="'+(m.bodyFatPct===undefined?"":m.bodyFatPct)+'" data-action="meas-edit-field" data-field="bodyFatPct">'+
+    '</div></div>';
+
+  html += '<div style="font-size:13.5px;font-weight:700;margin-top:18px;margin-bottom:10px;">היקפי גוף (ס"מ) — אופציונלי</div>';
+  html += '<div class="grid2">'+MEAS_FIELDS.map(function(f){
+    return '<div class="card" style="padding:11px 13px;"><div class="muted" style="font-size:11px;font-weight:600;">'+f[1]+'</div>'+
+      '<input type="number" step="0.1" inputmode="decimal" placeholder="ס\'\'מ" value="'+(m[f[0]]===undefined?"":m[f[0]])+'" data-action="meas-edit-field" data-field="'+f[0]+'" style="margin-top:5px;background:none;border:none;padding:0;font-family:Heebo;font-size:16px;font-weight:800;">'+
+      '</div>';
+  }).join("")+'</div>';
+
+  html += '<div style="margin-top:18px;"><button class="btn-primary" data-action="save-measurement-edit">שמור שינויים</button></div>';
+  html += '<div style="margin-top:10px;"><button class="btn-ghost" style="border-color:var(--danger);color:var(--danger);" data-action="delete-measurement" data-id="'+m.id+'">'+icon("trash","var(--danger)",15)+' מחק מדידה</button></div>';
+  html += '<div style="height:20px;"></div>';
+  root().innerHTML = html;
+}
+function saveMeasurementEdit(){
+  var m = measurementEditDraft;
+  var weight = parseFloat(m.weightKg);
+  if(!weight || weight<=0){ showToast("יש להזין משקל"); return; }
+  var clean = { id:m.id, date:m.date, weightKg:weight };
+  var bf = parseFloat(m.bodyFatPct); if(!isNaN(bf) && bf>0) clean.bodyFatPct = bf;
+  MEAS_FIELDS.forEach(function(f){
+    var v = parseFloat(m[f[0]]);
+    if(!isNaN(v) && v>0) clean[f[0]] = v;
+  });
+  var id = m.id;
+  persist(function(s){
+    var idx = s.measurements.findIndex(function(x){return x.id===id;});
+    if(idx>=0) s.measurements[idx] = clean;
+    s.measurements.sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+  });
+  detailMeasurementId=null; measurementEditDraft=null; view="measurements"; render();
+  showToast("המדידה עודכנה");
+}
+function deleteMeasurement(id){
+  var ok = window.confirm ? window.confirm("למחוק את המדידה הזו לצמיתות?") : true;
+  if(!ok) return;
+  persist(function(s){ s.measurements = s.measurements.filter(function(m){return m.id!==id;}); });
+  detailMeasurementId=null; measurementEditDraft=null; view="measurements"; render();
+  showToast("המדידה נמחקה");
+}
+
+/* ===================== progress ===================== */
+var progressExId = null;
+function renderProgress(){
+  if(!progressExId) progressExId = mostLoggedExercise();
+  var streak = computeStreak();
+  var html = '<div style="padding:26px 0 6px;"><div class="muted" style="font-size:13px;">סקירה כללית</div>'+
+    '<div class="hd" style="font-size:21px;font-weight:900;margin-top:2px;">ההתקדמות שלך</div></div>';
+
+  html += '<div class="card" style="margin-top:14px;">'+
+    '<div class="row between" style="margin-bottom:12px;"><div style="font-size:13px;font-weight:700;">רצף אימונים</div>'+
+    '<div class="row" style="gap:5px;">'+icon("flame","var(--accent-deep)",14)+'<span class="hd" style="font-size:12.5px;font-weight:800;">'+streak+' ימים</span></div></div>'+
+    heatmapHtml()+
+    '<div class="row" style="justify-content:flex-end;gap:5px;margin-top:12px;">'+
+    '<span style="font-size:9.5px;color:var(--faint);">פחות</span>'+
+    '<div style="width:9px;height:9px;border-radius:3px;background:var(--track);"></div>'+
+    '<div style="width:9px;height:9px;border-radius:3px;background:rgba(74,222,0,0.35);"></div>'+
+    '<div style="width:9px;height:9px;border-radius:3px;background:rgba(74,222,0,0.65);"></div>'+
+    '<div style="width:9px;height:9px;border-radius:3px;background:var(--accent);"></div>'+
+    '<span style="font-size:9.5px;color:var(--faint);">יותר</span></div></div>';
+
+  var exOptions = state.exercises.filter(function(e){ return exerciseTrend(e.id,1).length>0; });
+  var trend = progressExId ? exerciseTrend(progressExId, 8) : [];
+  var trendVals = trend.map(function(t){return t.max;});
+  if(exOptions.length===0){
+    html += '<div class="card" style="margin-top:14px;">'+
+      '<div style="font-size:13px;font-weight:700;margin-bottom:10px;">מגמת שיאים</div>'+
+      '<div class="muted" style="font-size:12.5px;text-align:center;padding:10px 0;">תעד כמה אימוני כוח כדי לראות כאן מגמות שיא לפי תרגיל</div>'+
+      '</div>';
+  } else {
+    html += '<div class="card" style="margin-top:14px;">'+
+      '<div class="row between" style="margin-bottom:14px;">'+
+      '<select data-action="progress-exercise" style="width:auto;background:none;border:none;font-weight:700;font-size:13px;padding:0;">'+
+      exOptions.map(function(e){ return '<option value="'+e.id+'"'+(e.id===progressExId?" selected":"")+'>מגמת שיא — '+escapeHtml(e.name)+'</option>'; }).join("")+
+      '</select>'+
+      (trendVals.length?'<div class="row" style="gap:4px;background:var(--accent-tint);border-radius:20px;padding:4px 9px;"><span class="hd" style="font-size:11.5px;font-weight:800;color:var(--accent-deep);">'+fmtNum(trendVals[trendVals.length-1])+' ק"ג</span></div>':'')+
+      '</div>'+
+      (trendVals.length?'<div class="row" style="align-items:flex-end;gap:7px;height:70px;">'+barsHtml(trendVals,true)+'</div>':'<div class="muted" style="font-size:12.5px;text-align:center;padding:16px 0;">עדיין אין מספיק נתונים לתרגיל הזה</div>')+
+      '</div>';
+  }
+
+  var balance = muscleBalanceWeek();
+  var maxB = Math.max.apply(null, MUSCLE_ORDER.map(function(m){return balance[m];}).concat([1]));
+  html += '<div class="card" style="margin-top:14px;"><div style="font-size:13px;font-weight:700;margin-bottom:12px;">איזון קבוצות שרירים השבוע</div>';
+  MUSCLE_ORDER.forEach(function(m,i){
+    var v = balance[m]||0;
+    var pct = Math.max(6, Math.round((v/maxB)*100));
+    html += '<div class="row" style="gap:10px;margin-bottom:'+(i===MUSCLE_ORDER.length-1?"0":"11px")+';">'+
+      '<div style="width:66px;font-size:11.5px;font-weight:600;color:var(--muted2);">'+MUSCLE_LABEL[m]+'</div>'+
+      '<div style="flex:1;height:8px;background:var(--track);border-radius:4px;overflow:hidden;"><div style="width:'+pct+'%;height:100%;background:'+(v>0?"var(--accent)":"var(--track)")+';border-radius:4px;"></div></div>'+
+      '<div style="width:22px;font-size:11px;color:var(--muted);text-align:left;">'+v+'×</div></div>';
+  });
+  html += '</div>';
+
+  var totalPRs = countTotalPRs();
+  html += '<div style="margin-top:14px;"><div style="font-size:13px;font-weight:700;margin-bottom:10px;">הישגים</div>'+
+    '<div class="grid3">'+
+    achv("trophy", totalPRs+" שיאים")+
+    achv("flame", "רצף "+streak+" ימים")+
+    achv("dumbbell", state.workouts.filter(function(w){return w.type==="strength";}).length+" אימוני כוח")+
+    '</div></div>';
+
+  root().innerHTML = html;
+}
+function achv(iconName,label){
+  return '<div class="card" style="padding:14px 8px;text-align:center;">'+
+    '<div style="width:38px;height:38px;border-radius:11px;background:var(--accent-tint);display:flex;align-items:center;justify-content:center;margin:0 auto;">'+icon(iconName,"var(--accent-deep)",19)+'</div>'+
+    '<div style="font-size:10.5px;font-weight:700;margin-top:8px;">'+label+'</div></div>';
+}
+
+/* ===================== profile & settings ===================== */
+function renderProfile(){
+  var g = state.profile;
+  var streak = computeStreak();
+  var html = viewHeaderSub("פרופיל והגדרות", "");
+
+  html += '<div class="card-lg" style="margin-top:14px;">'+
+    '<div style="display:flex;align-items:center;gap:14px;">'+
+    '<div style="width:60px;height:60px;border-radius:18px;background:var(--accent-tint);display:flex;align-items:center;justify-content:center;flex:none;">'+icon("user","var(--accent-deep)",28)+'</div>'+
+    '<div style="flex:1;min-width:0;">'+
+    '<input type="text" value="'+escapeHtml(g.name)+'" data-action="profile-field" data-field="name" placeholder="השם שלך" style="font-family:Heebo;font-size:17px;font-weight:800;background:none;border:none;padding:0;width:100%;">'+
+    '<div class="muted" style="font-size:11.5px;margin-top:3px;">רצף נוכחי: '+streak+' ימים</div></div>'+
+    '</div></div>';
+
+  html += '<div class="card-lg" style="margin-top:14px;">'+
+    '<div style="font-size:13px;font-weight:700;margin-bottom:14px;">היעדים שלי</div>'+
+    '<div class="field"><div class="row between" style="margin-bottom:7px;">'+
+    '<span style="font-size:12.5px;font-weight:600;color:var(--muted2);">יעד משקל (ק"ג)</span></div>'+
+    '<input type="number" step="0.5" value="'+(g.weightGoalKg===null||g.weightGoalKg===undefined?"":g.weightGoalKg)+'" placeholder="לא הוגדר" data-action="profile-field" data-field="weightGoalKg"></div>'+
+    '<div class="field" style="margin-bottom:0;"><div class="row between" style="margin-bottom:7px;">'+
+    '<span style="font-size:12.5px;font-weight:600;color:var(--muted2);">יעד אימונים שבועי</span></div>'+
+    '<input type="number" step="1" value="'+(g.weeklyWorkoutGoal===null||g.weeklyWorkoutGoal===undefined?"":g.weeklyWorkoutGoal)+'" placeholder="לא הוגדר" data-action="profile-field" data-field="weeklyWorkoutGoal"></div>'+
+    '</div>';
+
+  html += '<div class="card" style="margin-top:14px;padding:6px 16px;">'+
+    settingsRow("bell","תזכורות אימון", g.remindersEnabled?"מופעל":"כבוי", "toggle-reminders")+
+    settingsRow("dumbbell","ניהול תרגילים", state.exercises.length, "open-exercises")+
+    settingsRow("template","תבניות אימון", state.templates.length, "open-templates")+
+    settingsRow("cloud","ייצוא נתונים", "", "export-data")+
+    settingsRow("trash","איפוס כל הנתונים", "", "reset-data")+
+    settingsRow("info","אודות האפליקציה", "גרסה 1.0", "noop")+
+    '</div>';
+
+  root().innerHTML = html;
+}
+function settingsRow(iconName,label,val,action){
+  return '<div class="settings-row" data-action="'+action+'">'+
+    '<div style="width:32px;height:32px;border-radius:10px;background:var(--accent-tint);display:flex;align-items:center;justify-content:center;flex:none;">'+icon(iconName,"var(--accent-deep)",16)+'</div>'+
+    '<span style="font-size:13px;font-weight:600;flex:1;">'+label+'</span>'+
+    (val!==""?'<span style="font-size:12px;color:var(--muted);">'+val+'</span>':'')+
+    icon("fwd","#A9A69B",13)+'</div>';
+}
+
+function renderExercises(){
+  var html = viewHeaderSub("ניהול תרגילים", "", "profile");
+  html += '<div class="card" style="margin-top:14px;padding:14px;">'+
+    '<label class="field-label">שם תרגיל חדש</label>'+
+    '<input type="text" id="newExName" placeholder="לדוגמה: פרפר הפוך" style="margin-bottom:8px;">'+
+    '<label class="field-label">קבוצת שריר</label>'+
+    '<select id="newExMuscle" style="margin-bottom:10px;">'+MUSCLE_ORDER.map(function(m){return '<option value="'+m+'">'+MUSCLE_LABEL[m]+'</option>';}).join("")+'</select>'+
+    '<button class="btn-secondary" style="width:100%;" data-action="add-exercise">הוסף תרגיל</button></div>';
+
+  MUSCLE_ORDER.forEach(function(m){
+    var list = state.exercises.filter(function(e){return e.muscle===m;});
+    if(!list.length) return;
+    html += '<div style="font-size:12px;font-weight:700;color:var(--muted);margin-top:20px;margin-bottom:8px;">'+MUSCLE_LABEL[m]+'</div>';
+    list.forEach(function(e){
+      if(editingExerciseId===e.id){
+        html += '<div class="card" style="margin-top:8px;padding:12px 14px;">'+
+          '<label class="field-label">שם תרגיל</label>'+
+          '<input type="text" id="editExName" value="'+escapeHtml(e.name)+'" style="margin-bottom:8px;">'+
+          '<label class="field-label">קבוצת שריר</label>'+
+          '<select id="editExMuscle" style="margin-bottom:10px;">'+MUSCLE_ORDER.map(function(mm){return '<option value="'+mm+'"'+(mm===e.muscle?" selected":"")+'>'+MUSCLE_LABEL[mm]+'</option>';}).join("")+'</select>'+
+          '<div class="row" style="gap:8px;">'+
+          '<button class="btn-primary" style="padding:10px;" data-action="save-exercise-edit" data-id="'+e.id+'">שמור</button>'+
+          '<button class="btn-secondary" data-action="cancel-exercise-edit">ביטול</button>'+
+          '</div></div>';
+      } else {
+        html += '<div class="card" style="margin-top:8px;padding:11px 14px;display:flex;align-items:center;gap:10px;">'+
+          icon("dumbbell","var(--accent-deep)",16)+'<span style="flex:1;font-size:13px;font-weight:600;">'+escapeHtml(e.name)+'</span>'+
+          '<button data-action="edit-exercise" data-id="'+e.id+'" style="background:none;border:none;cursor:pointer;">'+icon("pencil","#75726C",15)+'</button>'+
+          '<button data-action="delete-exercise" data-id="'+e.id+'" style="background:none;border:none;cursor:pointer;">'+icon("trash","#A9A69B",15)+'</button></div>';
+      }
+    });
+  });
+  root().innerHTML = html;
+}
+function renderTemplates(){
+  var html = viewHeaderSub("תבניות אימון", "", "profile");
+  state.templates.forEach(function(t){
+    if(editingTemplateId===t.id){
+      html += '<div class="card" style="margin-top:12px;padding:14px;">'+
+        '<label class="field-label">שם תבנית</label>'+
+        '<input type="text" id="editTplName" value="'+escapeHtml(t.name)+'" style="margin-bottom:10px;">'+
+        '<label class="field-label">תרגילים בתבנית</label>'+
+        '<div style="max-height:160px;overflow-y:auto;margin-bottom:10px;">'+
+        state.exercises.map(function(e){
+          var checked = t.exerciseIds.indexOf(e.id)>=0;
+          return '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12.5px;">'+
+            '<input type="checkbox" value="'+e.id+'" class="tpl-edit-ex-check"'+(checked?" checked":"")+' style="width:auto;"> '+escapeHtml(e.name)+'</label>';
+        }).join("")+
+        '</div>'+
+        '<div class="row" style="gap:8px;">'+
+        '<button class="btn-primary" style="padding:10px;" data-action="save-template-edit" data-id="'+t.id+'">שמור</button>'+
+        '<button class="btn-secondary" data-action="cancel-template-edit">ביטול</button>'+
+        '</div></div>';
+    } else {
+      html += '<div class="card" style="margin-top:12px;padding:14px;">'+
+        '<div class="row between"><span style="font-size:14px;font-weight:700;">'+escapeHtml(t.name)+'</span>'+
+        '<div class="row" style="gap:6px;">'+
+        '<button data-action="edit-template" data-id="'+t.id+'" style="background:none;border:none;cursor:pointer;">'+icon("pencil","#75726C",15)+'</button>'+
+        '<button data-action="delete-template" data-id="'+t.id+'" style="background:none;border:none;cursor:pointer;">'+icon("trash","#A9A69B",15)+'</button>'+
+        '</div></div>'+
+        '<div class="muted" style="font-size:11.5px;margin-top:6px;">'+t.exerciseIds.map(function(id){
+          var e = state.exercises.filter(function(x){return x.id===id;})[0];
+          return e?e.name:id;
+        }).join(" · ")+'</div></div>';
+    }
+  });
+
+  html += '<div class="card" style="margin-top:18px;padding:14px;">'+
+    '<label class="field-label">שם תבנית חדשה</label>'+
+    '<input type="text" id="newTplName" placeholder="לדוגמה: אימון C — רגליים" style="margin-bottom:10px;">'+
+    '<label class="field-label">תרגילים בתבנית</label>'+
+    '<div style="max-height:160px;overflow-y:auto;margin-bottom:10px;">'+
+    state.exercises.map(function(e){
+      return '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12.5px;">'+
+        '<input type="checkbox" value="'+e.id+'" class="tpl-ex-check" style="width:auto;"> '+escapeHtml(e.name)+'</label>';
+    }).join("")+
+    '</div>'+
+    '<button class="btn-secondary" style="width:100%;" data-action="add-template">הוסף תבנית</button></div>';
+
+  root().innerHTML = html;
+}
+function root(){ return document.getElementById("app-root"); }
+
+function computePaceStr(distanceKm, durationSec){
+  var dist = parseFloat(distanceKm)||0;
+  if(dist<=0) return "—";
+  var paceMin = (durationSec/60)/dist;
+  return Math.floor(paceMin)+":"+pad2(Math.round((paceMin%1)*60));
+}
+function fmtTimer(secs){
+  var h=Math.floor(secs/3600), m=Math.floor((secs%3600)/60), s=secs%60;
+  return pad2(h)+":"+pad2(m)+":"+pad2(s);
+}
+
+/* ===================== render dispatch & nav ===================== */
+var MAIN_TABS = {home:1, history:1, measurements:1, progress:1};
+function navbarHtml(active){
+  var tabs = [["home","home","בית"],["history","dumbbell","אימונים"],["measurements","ruler","מדידות"],["progress","trending","התקדמות"]];
+  return '<div class="navbar">' + tabs.map(function(t){
+    var on = t[0]===active;
+    var color = on ? "var(--accent-deep)" : "#9C9B94";
+    return '<button class="navitem'+(on?" active":"")+'" data-action="nav" data-view="'+t[0]+'">'+icon(t[1],color,21)+'<span>'+t[2]+'</span></button>';
+  }).join("") + '</div>';
+}
+function render(){
+  if(view==="home") renderHome();
+  else if(view==="history") renderHistory();
+  else if(view==="strength") renderStrength();
+  else if(view==="cardio") renderCardio();
+  else if(view==="measurements") renderMeasurementsTab();
+  else if(view==="measurement-form") renderMeasurementForm();
+  else if(view==="measurement-detail") renderMeasurementDetail();
+  else if(view==="workout-detail") renderWorkoutDetail();
+  else if(view==="progress") renderProgress();
+  else if(view==="profile") renderProfile();
+  else if(view==="exercises") renderExercises();
+  else if(view==="templates") renderTemplates();
+  else renderHome();
+
+  if(MAIN_TABS[view]){
+    root().insertAdjacentHTML("beforeend", navbarHtml(view));
+  }
+  window.scrollTo(0,0);
+}
+
+/* ===================== event handling ===================== */
+function handleClick(e){
+  var el = e.target.closest("[data-action]");
+  if(!el) return;
+  var action = el.getAttribute("data-action");
+  switch(action){
+    case "noop": break;
+    case "nav": view = el.getAttribute("data-view"); render(); break;
+    case "open-profile": view="profile"; render(); break;
+    case "start-strength": startStrengthDraft(state.meta.lastTemplateId); break;
+    case "start-cardio": startCardioDraft(); break;
+    case "start-measurement": startMeasurementDraft(); break;
+    case "cancel-strength": draft=null; workoutStartedAt=null; view="home"; render(); break;
+    case "cancel-cardio":
+      if(cardioTimer.intervalId){ clearInterval(cardioTimer.intervalId); cardioTimer.intervalId=null; }
+      draft=null; view="home"; render(); break;
+    case "finish-strength": finishStrength(); break;
+    case "finish-cardio": finishCardio(); break;
+    case "finish-measurement": finishMeasurement(); break;
+    case "toggle-set": {
+      var exI=+el.getAttribute("data-ex"), setI=+el.getAttribute("data-set");
+      var s = draft.exercises[exI].sets[setI];
+      s.done = !s.done;
+      render();
+      break;
+    }
+    case "add-set": {
+      var exI2=+el.getAttribute("data-ex");
+      draft.exercises[exI2].sets.push({weight:"",reps:"",done:false});
+      render();
+      break;
+    }
+    case "remove-exercise": {
+      var exI3=+el.getAttribute("data-idx");
+      draft.exercises.splice(exI3,1);
+      render();
+      break;
+    }
+    case "filter-history": historyFilter = el.getAttribute("data-filter"); view="history"; render(); break;
+    case "view-workout": openWorkoutDetail(el.getAttribute("data-id")); break;
+    case "view-measurement": openMeasurementDetail(el.getAttribute("data-id")); break;
+    case "save-workout-edit": saveWorkoutEdit(); break;
+    case "delete-workout": deleteWorkout(el.getAttribute("data-id")); break;
+    case "save-measurement-edit": saveMeasurementEdit(); break;
+    case "delete-measurement": deleteMeasurement(el.getAttribute("data-id")); break;
+    case "wk-set-activity": workoutEditDraft.activity = el.getAttribute("data-activity"); render(); break;
+    case "wk-remove-exercise": {
+      var wex = +el.getAttribute("data-ex");
+      workoutEditDraft.exercises.splice(wex,1);
+      render();
+      break;
+    }
+    case "wk-remove-set": {
+      var wex2 = +el.getAttribute("data-ex"), wset2 = +el.getAttribute("data-set");
+      workoutEditDraft.exercises[wex2].sets.splice(wset2,1);
+      render();
+      break;
+    }
+    case "wk-add-set": {
+      var wex3 = +el.getAttribute("data-ex");
+      workoutEditDraft.exercises[wex3].sets.push({weight:0,reps:0,done:true});
+      render();
+      break;
+    }
+    case "edit-exercise": editingExerciseId = el.getAttribute("data-id"); render(); break;
+    case "cancel-exercise-edit": editingExerciseId = null; render(); break;
+    case "save-exercise-edit": saveExerciseEdit(el.getAttribute("data-id")); break;
+    case "edit-template": editingTemplateId = el.getAttribute("data-id"); render(); break;
+    case "cancel-template-edit": editingTemplateId = null; render(); break;
+    case "save-template-edit": saveTemplateEdit(el.getAttribute("data-id")); break;
+    case "timer-toggle": toggleTimer(); break;
+    case "timer-reset":
+      draft.durationSec=0; cardioTimer.seconds=0;
+      if(cardioTimer.running){ toggleTimer(); }
+      render();
+      break;
+    case "set-activity": draft.activity = el.getAttribute("data-activity"); render(); break;
+    case "open-exercises": view="exercises"; render(); break;
+    case "open-templates": view="templates"; render(); break;
+    case "toggle-reminders":
+      persist(function(s){ s.profile.remindersEnabled = !s.profile.remindersEnabled; });
+      break;
+    case "export-data": exportData(); break;
+    case "reset-data": resetAllData(); break;
+    case "add-exercise": addExerciseFromForm(); break;
+    case "delete-exercise": deleteExercise(el.getAttribute("data-id")); break;
+    case "add-template": addTemplateFromForm(); break;
+    case "delete-template": deleteTemplate(el.getAttribute("data-id")); break;
+  }
+}
+function handleChange(e){
+  var el = e.target.closest("[data-action]");
+  if(!el) return;
+  var action = el.getAttribute("data-action");
+  if(action==="switch-template"){
+    var tpl = state.templates.filter(function(t){return t.id===el.value;})[0];
+    if(tpl){
+      draft.templateId = tpl.id; draft.templateName = tpl.name;
+      draft.exercises = tpl.exerciseIds.map(function(exId){ return buildDraftExercise(exId); });
+      render();
+    }
+  } else if(action==="add-exercise-select"){
+    if(el.value){
+      draft.exercises.push(buildDraftExercise(el.value));
+      render();
+    }
+  } else if(action==="progress-exercise"){
+    progressExId = el.value; render();
+  } else if(action==="wk-field"){
+    var wfField = el.getAttribute("data-field");
+    if(wfField==="date"){ workoutEditDraft.date = combineDateKeepTime(el.value, workoutEditDraft.date); }
+    else { workoutEditDraft[wfField] = el.value; }
+  } else if(action==="meas-edit-field" && el.tagName==="INPUT" && el.type==="date"){
+    measurementEditDraft.date = combineDateKeepTime(el.value, measurementEditDraft.date);
+  } else if(action==="profile-field"){
+    var field = el.getAttribute("data-field");
+    if(field==="name"){
+      var nameVal = (el.value||"").trim();
+      if(nameVal){ persist(function(s){ s.profile.name = nameVal; }); }
+      else { render(); }
+    } else {
+      var val = parseFloat(el.value);
+      if(!isNaN(val)){
+        persist(function(s){ s.profile[field] = val; });
+      } else if(el.value===""){
+        persist(function(s){ s.profile[field] = null; });
+      }
+    }
+  }
+}
+function handleInput(e){
+  var el = e.target.closest("[data-action]");
+  if(!el) return;
+  var action = el.getAttribute("data-action");
+  if(action==="set-input"){
+    var exI=+el.getAttribute("data-ex"), setI=+el.getAttribute("data-set"), field=el.getAttribute("data-field");
+    draft.exercises[exI].sets[setI][field] = el.value===""?"":parseFloat(el.value);
+  } else if(action==="cardio-field"){
+    var field2 = el.getAttribute("data-field");
+    draft[field2] = field2==="notes" ? el.value : el.value;
+    if(field2==="distanceKm"){
+      var pd = document.getElementById("paceDisplay");
+      if(pd) pd.textContent = computePaceStr(el.value, draft.durationSec||0);
+    }
+  } else if(action==="meas-field"){
+    draft[el.getAttribute("data-field")] = el.value;
+  } else if(action==="wk-field"){
+    var wfField2 = el.getAttribute("data-field");
+    if(wfField2!=="date"){ workoutEditDraft[wfField2] = el.value; }
+  } else if(action==="wk-set-field"){
+    var wex4=+el.getAttribute("data-ex"), wset4=+el.getAttribute("data-set"), wfield4=el.getAttribute("data-field");
+    workoutEditDraft.exercises[wex4].sets[wset4][wfield4] = el.value===""?0:parseFloat(el.value);
+  } else if(action==="meas-edit-field"){
+    if(el.type!=="date"){ measurementEditDraft[el.getAttribute("data-field")] = el.value; }
+  }
+}
+document.addEventListener("click", handleClick);
+document.addEventListener("change", handleChange);
+document.addEventListener("input", handleInput);
+
+function toggleTimer(){
+  cardioTimer.running = !cardioTimer.running;
+  if(cardioTimer.running){
+    cardioTimer.intervalId = setInterval(function(){
+      draft.durationSec = (draft.durationSec||0)+1;
+      var td = document.getElementById("timerDisplay");
+      if(td) td.textContent = fmtTimer(draft.durationSec);
+      var pd = document.getElementById("paceDisplay");
+      if(pd) pd.textContent = computePaceStr(draft.distanceKm, draft.durationSec);
+    }, 1000);
+  } else {
+    if(cardioTimer.intervalId){ clearInterval(cardioTimer.intervalId); cardioTimer.intervalId=null; }
+  }
+}
+
+/* ===================== finish / save actions ===================== */
+function finishStrength(){
+  var exercises = [];
+  var totalVolume = 0;
+  draft.exercises.forEach(function(ex){
+    var doneSets = ex.sets.filter(function(s){ return s.done && s.weight!=="" && s.reps!=="" && !isNaN(s.weight) && !isNaN(s.reps); });
+    if(doneSets.length===0) return;
+    doneSets.forEach(function(s){ totalVolume += (s.weight||0)*(s.reps||0); });
+    exercises.push({ exerciseId: ex.exerciseId, name: ex.name, sets: doneSets.map(function(s){ return {weight:s.weight, reps:s.reps, done:true}; }) });
+  });
+  if(exercises.length===0){ showToast("סמן לפחות סט אחד כבוצע"); return; }
+  var durationMin = workoutStartedAt ? Math.max(1, Math.round((new Date()-workoutStartedAt)/60000)) : 30;
+  var w = { id:uid("w"), type:"strength", date:new Date().toISOString(), durationMin:durationMin,
+    templateId:draft.templateId, templateName:draft.templateName, exercises:exercises, totalVolume:totalVolume };
+  persist(function(s){ s.workouts.unshift(w); s.meta.lastTemplateId = w.templateId; });
+  draft=null; workoutStartedAt=null; view="home";
+  render();
+  showToast("האימון נשמר!");
+}
+function finishCardio(){
+  var dist = parseFloat(draft.distanceKm)||0;
+  var durMin = Math.round((draft.durationSec||0)/60);
+  if(dist<=0 || durMin<=0){ showToast("הזן מרחק והפעל את הטיימר"); return; }
+  var w = { id:uid("w"), type:"cardio", date:new Date().toISOString(), durationMin:durMin,
+    activity:draft.activity, distanceKm:dist, avgPaceMinPerKm: durMin/dist, notes:draft.notes||"" };
+  if(cardioTimer.intervalId){ clearInterval(cardioTimer.intervalId); cardioTimer.intervalId=null; }
+  persist(function(s){ s.workouts.unshift(w); });
+  draft=null; view="home";
+  render();
+  showToast("האימון נשמר!");
+}
+function finishMeasurement(){
+  var weight = parseFloat(draft.weightKg);
+  if(!weight || weight<=0){ showToast("יש להזין משקל"); return; }
+  var m = { id:uid("m"), date:new Date().toISOString(), weightKg:weight };
+  var bf = parseFloat(draft.bodyFatPct); if(!isNaN(bf) && bf>0) m.bodyFatPct = bf;
+  MEAS_FIELDS.forEach(function(f){
+    var v = parseFloat(draft[f[0]]);
+    if(!isNaN(v) && v>0) m[f[0]] = v;
+  });
+  persist(function(s){ s.measurements.unshift(m); });
+  draft=null; view="measurements";
+  render();
+  showToast("המדידה נשמרה!");
+}
+function exportData(){
+  var json = JSON.stringify(state, null, 2);
+  var filename = "fitness-data-" + new Date().toISOString().slice(0,10) + ".json";
+  if(useClaude){
+    useClaude("downloads").then(function(dl){
+      if(dl && dl.save){ dl.save({filename:filename, data:json}); }
+      else { fallbackDownload(json, filename); }
+    }).catch(function(){ fallbackDownload(json, filename); });
+  } else {
+    fallbackDownload(json, filename);
+  }
+}
+function fallbackDownload(text, filename){
+  try{
+    var blob = new Blob([text], {type:"application/json"});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+  }catch(e){ showToast("לא ניתן לייצא כרגע"); }
+}
+function resetAllData(){
+  var ok = window.confirm ? window.confirm("לאפס את כל האימונים והמדידות שנשמרו? פעולה זו אינה הפיכה.") : true;
+  if(!ok) return;
+  persist(function(s){ s.workouts=[]; s.measurements=[]; });
+  view="home"; render();
+  showToast("הנתונים אופסו");
+}
+function addExerciseFromForm(){
+  var nameEl = document.getElementById("newExName");
+  var muscleEl = document.getElementById("newExMuscle");
+  var name = (nameEl.value||"").trim();
+  if(!name){ showToast("יש להזין שם תרגיל"); return; }
+  var ex = { id: uid("ex"), name:name, muscle: muscleEl.value };
+  persist(function(s){ s.exercises.push(ex); });
+  render();
+  showToast("התרגיל נוסף");
+}
+function saveExerciseEdit(id){
+  var nameEl = document.getElementById("editExName");
+  var muscleEl = document.getElementById("editExMuscle");
+  var name = (nameEl.value||"").trim();
+  if(!name){ showToast("יש להזין שם תרגיל"); return; }
+  var muscle = muscleEl.value;
+  persist(function(s){
+    var ex = s.exercises.filter(function(e){return e.id===id;})[0];
+    if(ex){ ex.name = name; ex.muscle = muscle; }
+    s.workouts.forEach(function(w){
+      if(w.type!=="strength") return;
+      w.exercises.forEach(function(e){ if(e.exerciseId===id) e.name = name; });
+    });
+  });
+  editingExerciseId = null;
+  render();
+  showToast("התרגיל עודכן");
+}
+function deleteExercise(id){
+  var ok = window.confirm ? window.confirm("למחוק את התרגיל?") : true;
+  if(!ok) return;
+  persist(function(s){
+    s.exercises = s.exercises.filter(function(e){return e.id!==id;});
+    s.templates.forEach(function(t){ t.exerciseIds = t.exerciseIds.filter(function(id2){return id2!==id;}); });
+  });
+  render();
+}
+function addTemplateFromForm(){
+  var nameEl = document.getElementById("newTplName");
+  var name = (nameEl.value||"").trim();
+  var checks = Array.prototype.slice.call(document.querySelectorAll(".tpl-ex-check:checked"));
+  var ids = checks.map(function(c){return c.value;});
+  if(!name || ids.length===0){ showToast("יש להזין שם ולבחור לפחות תרגיל אחד"); return; }
+  var tpl = { id: uid("tpl"), name:name, exerciseIds: ids };
+  persist(function(s){ s.templates.push(tpl); });
+  render();
+  showToast("התבנית נוספה");
+}
+function saveTemplateEdit(id){
+  var nameEl = document.getElementById("editTplName");
+  var name = (nameEl.value||"").trim();
+  var checks = Array.prototype.slice.call(document.querySelectorAll(".tpl-edit-ex-check:checked"));
+  var ids = checks.map(function(c){return c.value;});
+  if(!name || ids.length===0){ showToast("יש להזין שם ולבחור לפחות תרגיל אחד"); return; }
+  persist(function(s){
+    var t = s.templates.filter(function(x){return x.id===id;})[0];
+    if(t){ t.name = name; t.exerciseIds = ids; }
+  });
+  editingTemplateId = null;
+  render();
+  showToast("התבנית עודכנה");
+}
+function deleteTemplate(id){
+  var ok = window.confirm ? window.confirm("למחוק את התבנית?") : true;
+  if(!ok) return;
+  persist(function(s){ s.templates = s.templates.filter(function(t){return t.id!==id;}); });
+  render();
+}
+
+/* ===================== init ===================== */
+function init(){
+  state = loadInitialState();
+  if(!state.meta) state.meta = {lastTemplateId: (state.templates[0]||{}).id};
+  render();
+  if(wasSeeded){
+    doPersist();
+  }
+}
+if(document.readyState==="loading"){
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  init();
+}
+
+})();
+</script>
+</body>
+</html>
