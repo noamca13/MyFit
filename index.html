@@ -97,7 +97,7 @@
   @keyframes viewFadeIn{from{opacity:0;}to{opacity:1;}}
   .view-enter{animation:viewFadeIn 0.22s ease;}
   @media (prefers-reduced-motion: reduce){ .view-enter{animation:none;} }
-  .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;
+  .toast{position:fixed;top:max(16px,calc(env(safe-area-inset-top) + 8px));left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;
     padding:11px 18px;border-radius:30px;font-size:13px;font-weight:700;z-index:100;box-shadow:0 6px 20px rgba(0,0,0,0.25);
     opacity:0;pointer-events:none;transition:opacity .25s, transform .25s;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(6px);}
@@ -106,6 +106,8 @@
   .check-circle{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--dash);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;}
   .check-circle.done{background:var(--accent);border-color:var(--accent);}
   .ex-card{margin-top:14px;}
+  .ex-card.dragging{opacity:0.6;box-shadow:var(--shadow-lg);position:relative;z-index:30;}
+  .ex-card.drag-target{outline:2px dashed var(--accent-deep);outline-offset:3px;}
   .settings-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--divider);cursor:pointer;}
   .settings-row:last-child{border-bottom:none;}
   .hm-cell{aspect-ratio:1;border-radius:6px;}
@@ -129,8 +131,15 @@
 var MONTHS = ["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"];
 var DAYS_SHORT = ["א","ב","ג","ד","ה","ו","ש"];
 var DAYS_FULL = ["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
-var MUSCLE_LABEL = {chest:"חזה", back:"גב", legs:"רגליים", shoulders:"כתפיים", arms:"ידיים", core:"בטן / core"};
-var MUSCLE_ORDER = ["chest","back","legs","shoulders","arms","core"];
+/* seed-only defaults; the live, user-editable list is state.muscleGroups (see ensurePlanFields) */
+var DEFAULT_MUSCLE_GROUPS = [
+  ["chest","חזה"], ["back","גב"], ["legs","רגליים"], ["shoulders","כתפיים"],
+  ["arms_front","יד קדמית"], ["arms_back","יד אחורית"], ["core","בטן / core"]
+];
+function muscleLabel(id){
+  var g = state.muscleGroups && state.muscleGroups.filter(function(x){return x.id===id;})[0];
+  return g ? g.label : (id||"אחר");
+}
 
 var ICONS = {
   home:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h5v-5h2v5h5v-9"/></svg>',
@@ -159,7 +168,8 @@ var ICONS = {
   photo:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3.2"/><path d="M8 5l1.5-2h5L16 5"/></svg>',
   x:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   moon:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>',
-  repeat:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'
+  repeat:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>',
+  grip:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="{c}"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>'
 };
 function icon(name, color, size){
   var t = ICONS[name] || "";
@@ -254,8 +264,8 @@ function buildExerciseLibrary(){
     {id:"calf-raise", name:"הרמת עקבים", muscle:"legs"},
     {id:"shoulder-press", name:"לחיצת כתפיים", muscle:"shoulders"},
     {id:"lateral-raise", name:"הרחקת כתפיים לצד", muscle:"shoulders"},
-    {id:"bicep-curl", name:"כפיפת מרפק", muscle:"arms"},
-    {id:"tricep-pushdown", name:"פשיטת מרפק בפולי", muscle:"arms"},
+    {id:"bicep-curl", name:"כפיפת מרפק", muscle:"arms_front"},
+    {id:"tricep-pushdown", name:"פשיטת מרפק בפולי", muscle:"arms_back"},
     {id:"plank", name:"פלאנק", muscle:"core"},
     {id:"cable-crunch", name:"כפיפת בטן בכבל", muscle:"core"}
   ];
@@ -279,6 +289,7 @@ function generateSeedState(){
     plan: [],
     routine: null,
     measureFields: DEFAULT_MEAS_FIELDS.map(function(f){ return {id:f[0], label:f[1]}; }),
+    muscleGroups: DEFAULT_MUSCLE_GROUPS.map(function(g){ return {id:g[0], label:g[1]}; }),
     meta:{ lastTemplateId: "t-a" }
   };
 }
@@ -290,6 +301,7 @@ var draft = null; /* in-progress strength/cardio session, not persisted until fi
 var detailWorkoutId = null, workoutEditDraft = null;
 var detailMeasurementId = null, measurementEditDraft = null;
 var editingExerciseId = null;
+var editingMuscleGroupId = null;
 var editingTemplateId = null, editingTemplateName = null;
 var plannerWeekOffset = 0;
 var plannerEditDate = null;
@@ -331,6 +343,18 @@ function ensurePlanFields(s){
     if(s.routine===undefined) s.routine = null;
     if(!Array.isArray(s.measureFields)) s.measureFields = DEFAULT_MEAS_FIELDS.map(function(f){ return {id:f[0], label:f[1]}; });
     if(s.profile && !s.profile.theme) s.profile.theme = "auto";
+    if(!Array.isArray(s.muscleGroups)) s.muscleGroups = DEFAULT_MUSCLE_GROUPS.map(function(g){ return {id:g[0], label:g[1]}; });
+    /* migration: "ידיים" was split into "יד קדמית"/"יד אחורית" - move the two default
+       arm exercises to their new group, and fall back any other exercise still tagged
+       with the old generic "arms" id (which no longer exists as a group) to arms_front
+       so nothing gets silently dropped from the exercise list. */
+    if(Array.isArray(s.exercises)){
+      s.exercises.forEach(function(e){
+        if(e.id==="bicep-curl") e.muscle = "arms_front";
+        else if(e.id==="tricep-pushdown") e.muscle = "arms_back";
+        else if(e.muscle==="arms") e.muscle = "arms_front";
+      });
+    }
   }
   return s;
 }
@@ -519,7 +543,7 @@ function heatmapDays(n){
 }
 function muscleBalanceWeek(){
   var wk = workoutsInLastDays(7).filter(function(w){return w.type==="strength";});
-  var counts = {}; MUSCLE_ORDER.forEach(function(m){counts[m]=0;});
+  var counts = {}; state.muscleGroups.forEach(function(g){counts[g.id]=0;});
   wk.forEach(function(w){
     var touched = {};
     w.exercises.forEach(function(e){
@@ -1052,7 +1076,8 @@ function renderStrength(){
     '</div>';
 
   draft.exercises.forEach(function(ex, exIdx){
-    html += '<div class="card ex-card"><div class="row" style="gap:10px;margin-bottom:10px;">'+
+    html += '<div class="card ex-card" data-idx="'+exIdx+'"><div class="row" style="gap:10px;margin-bottom:10px;">'+
+      (draft.exercises.length>1?'<div class="drag-handle" style="cursor:grab;touch-action:none;flex:none;padding:4px;margin:-4px;">'+icon("grip","var(--faint)",16)+'</div>':'')+
       '<div style="width:34px;height:34px;border-radius:10px;background:var(--accent-tint);display:flex;align-items:center;justify-content:center;flex:none;">'+icon("dumbbell","var(--accent-deep)",17)+'</div>'+
       '<div style="flex:1;"><div style="font-size:14.5px;font-weight:700;">'+escapeHtml(ex.name)+'</div>'+
       '<div style="font-size:11px;color:var(--muted);margin-top:1px;">'+ex.sets.length+' סטים</div></div>'+
@@ -1084,7 +1109,7 @@ function renderStrength(){
     '<select data-action="add-exercise-select" style="margin-bottom:8px;">'+
     '<option value="">+ הוסף תרגיל מהספרייה…</option>'+
     state.exercises.filter(function(e){ return !draft.exercises.some(function(de){return de.exerciseId===e.id;}); })
-      .map(function(e){ return '<option value="'+e.id+'">'+escapeHtml(e.name)+' ('+MUSCLE_LABEL[e.muscle]+')</option>'; }).join("")+
+      .map(function(e){ return '<option value="'+e.id+'">'+escapeHtml(e.name)+' ('+escapeHtml(muscleLabel(e.muscle))+')</option>'; }).join("")+
     '</select></div>';
 
   html += '<div class="card" style="margin-top:12px;"><label class="field-label">הערות</label>'+
@@ -1387,13 +1412,13 @@ function renderProgress(){
   }
 
   var balance = muscleBalanceWeek();
-  var maxB = Math.max.apply(null, MUSCLE_ORDER.map(function(m){return balance[m];}).concat([1]));
+  var maxB = Math.max.apply(null, state.muscleGroups.map(function(g){return balance[g.id];}).concat([1]));
   html += '<div class="card" style="margin-top:14px;"><div style="font-size:13px;font-weight:700;margin-bottom:12px;">איזון קבוצות שרירים השבוע</div>';
-  MUSCLE_ORDER.forEach(function(m,i){
-    var v = balance[m]||0;
+  state.muscleGroups.forEach(function(g,i){
+    var v = balance[g.id]||0;
     var pct = Math.max(6, Math.round((v/maxB)*100));
-    html += '<div class="row" style="gap:10px;margin-bottom:'+(i===MUSCLE_ORDER.length-1?"0":"11px")+';">'+
-      '<div style="width:66px;font-size:11.5px;font-weight:600;color:var(--muted2);">'+MUSCLE_LABEL[m]+'</div>'+
+    html += '<div class="row" style="gap:10px;margin-bottom:'+(i===state.muscleGroups.length-1?"0":"11px")+';">'+
+      '<div style="width:76px;font-size:11.5px;font-weight:600;color:var(--muted2);">'+escapeHtml(g.label)+'</div>'+
       '<div style="flex:1;height:8px;background:var(--track);border-radius:4px;overflow:hidden;"><div style="width:'+pct+'%;height:100%;background:'+(v>0?"var(--accent)":"var(--track)")+';border-radius:4px;"></div></div>'+
       '<div style="width:22px;font-size:11px;color:var(--muted);text-align:left;">'+v+'×</div></div>';
   });
@@ -1473,24 +1498,52 @@ function settingsRow(iconName,label,val,action){
 
 function renderExercises(){
   var html = viewHeaderSub("ניהול תרגילים", "", "profile");
+
+  html += '<div class="card" style="margin-top:14px;padding:14px;">'+
+    '<div style="font-size:13px;font-weight:700;margin-bottom:10px;">קבוצות שריר</div>';
+  state.muscleGroups.forEach(function(g){
+    if(editingMuscleGroupId===g.id){
+      html += '<div class="row" style="gap:8px;margin-bottom:8px;">'+
+        '<input type="text" id="editMgName" value="'+escapeHtml(g.label)+'" style="flex:1;margin-bottom:0;">'+
+        '<button data-action="save-muscle-group-edit" data-id="'+g.id+'" style="background:none;border:none;cursor:pointer;">'+icon("check","var(--accent-deep)",17)+'</button>'+
+        '<button data-action="cancel-muscle-group-edit" style="background:none;border:none;cursor:pointer;">'+icon("x","var(--faint)",17)+'</button>'+
+        '</div>';
+    } else {
+      var usedCount = state.exercises.filter(function(e){return e.muscle===g.id;}).length;
+      html += '<div class="row between" style="margin-bottom:8px;">'+
+        '<span style="font-size:13px;font-weight:600;">'+escapeHtml(g.label)+'</span>'+
+        '<div class="row" style="gap:4px;">'+
+        (usedCount?'<span class="muted" style="font-size:11px;margin-left:4px;">'+usedCount+' תרגילים</span>':'')+
+        '<button data-action="edit-muscle-group" data-id="'+g.id+'" style="background:none;border:none;cursor:pointer;">'+icon("pencil","var(--muted)",14)+'</button>'+
+        '<button data-action="delete-muscle-group" data-id="'+g.id+'" style="background:none;border:none;cursor:pointer;">'+icon("trash","var(--faint)",14)+'</button>'+
+        '</div></div>';
+    }
+  });
+  html += '<div class="row" style="gap:8px;margin-top:8px;">'+
+    '<input type="text" id="newMuscleGroupName" placeholder="קבוצת שריר חדשה" style="flex:1;margin-bottom:0;">'+
+    '<button class="btn-secondary" data-action="add-muscle-group">הוסף</button></div>'+
+    '</div>';
+
   html += '<div class="card" style="margin-top:14px;padding:14px;">'+
     '<label class="field-label">שם תרגיל חדש</label>'+
     '<input type="text" id="newExName" placeholder="לדוגמה: פרפר הפוך" style="margin-bottom:8px;">'+
     '<label class="field-label">קבוצת שריר</label>'+
-    '<select id="newExMuscle" style="margin-bottom:10px;">'+MUSCLE_ORDER.map(function(m){return '<option value="'+m+'">'+MUSCLE_LABEL[m]+'</option>';}).join("")+'</select>'+
+    '<select id="newExMuscle" style="margin-bottom:10px;">'+state.muscleGroups.map(function(g){return '<option value="'+g.id+'">'+escapeHtml(g.label)+'</option>';}).join("")+'</select>'+
     '<button class="btn-secondary" style="width:100%;" data-action="add-exercise">הוסף תרגיל</button></div>';
 
-  MUSCLE_ORDER.forEach(function(m){
-    var list = state.exercises.filter(function(e){return e.muscle===m;});
+  var assignedIds = {};
+  state.muscleGroups.forEach(function(g){
+    var list = state.exercises.filter(function(e){return e.muscle===g.id;});
+    list.forEach(function(e){ assignedIds[e.id]=true; });
     if(!list.length) return;
-    html += '<div style="font-size:12px;font-weight:700;color:var(--muted);margin-top:20px;margin-bottom:8px;">'+MUSCLE_LABEL[m]+'</div>';
+    html += '<div style="font-size:12px;font-weight:700;color:var(--muted);margin-top:20px;margin-bottom:8px;">'+escapeHtml(g.label)+'</div>';
     list.forEach(function(e){
       if(editingExerciseId===e.id){
         html += '<div class="card" style="margin-top:8px;padding:12px 14px;">'+
           '<label class="field-label">שם תרגיל</label>'+
           '<input type="text" id="editExName" value="'+escapeHtml(e.name)+'" style="margin-bottom:8px;">'+
           '<label class="field-label">קבוצת שריר</label>'+
-          '<select id="editExMuscle" style="margin-bottom:10px;">'+MUSCLE_ORDER.map(function(mm){return '<option value="'+mm+'"'+(mm===e.muscle?" selected":"")+'>'+MUSCLE_LABEL[mm]+'</option>';}).join("")+'</select>'+
+          '<select id="editExMuscle" style="margin-bottom:10px;">'+state.muscleGroups.map(function(gg){return '<option value="'+gg.id+'"'+(gg.id===e.muscle?" selected":"")+'>'+escapeHtml(gg.label)+'</option>';}).join("")+'</select>'+
           '<div class="row" style="gap:8px;">'+
           '<button class="btn-primary" style="padding:10px;" data-action="save-exercise-edit" data-id="'+e.id+'">שמור</button>'+
           '<button class="btn-secondary" data-action="cancel-exercise-edit">ביטול</button>'+
@@ -1503,6 +1556,16 @@ function renderExercises(){
       }
     });
   });
+  var orphaned = state.exercises.filter(function(e){return !assignedIds[e.id];});
+  if(orphaned.length){
+    html += '<div style="font-size:12px;font-weight:700;color:var(--muted);margin-top:20px;margin-bottom:8px;">לא משויך לקבוצה</div>';
+    orphaned.forEach(function(e){
+      html += '<div class="card" style="margin-top:8px;padding:11px 14px;display:flex;align-items:center;gap:10px;">'+
+        icon("dumbbell","var(--accent-deep)",16)+'<span style="flex:1;font-size:13px;font-weight:600;">'+escapeHtml(e.name)+'</span>'+
+        '<button data-action="edit-exercise" data-id="'+e.id+'" style="background:none;border:none;cursor:pointer;">'+icon("pencil","var(--muted)",15)+'</button>'+
+        '<button data-action="delete-exercise" data-id="'+e.id+'" style="background:none;border:none;cursor:pointer;">'+icon("trash","var(--faint)",15)+'</button></div>';
+    });
+  }
   root().innerHTML = html;
 }
 function renderMeasureFields(){
@@ -1836,6 +1899,11 @@ function handleClick(e){
     case "edit-exercise": editingExerciseId = el.getAttribute("data-id"); render(); break;
     case "cancel-exercise-edit": editingExerciseId = null; render(); break;
     case "save-exercise-edit": saveExerciseEdit(el.getAttribute("data-id")); break;
+    case "edit-muscle-group": editingMuscleGroupId = el.getAttribute("data-id"); render(); break;
+    case "cancel-muscle-group-edit": editingMuscleGroupId = null; render(); break;
+    case "save-muscle-group-edit": saveMuscleGroupEdit(el.getAttribute("data-id")); break;
+    case "add-muscle-group": addMuscleGroupFromForm(); break;
+    case "delete-muscle-group": deleteMuscleGroup(el.getAttribute("data-id")); break;
     case "edit-template": editingTemplateId = el.getAttribute("data-id"); render(); break;
     case "cancel-template-edit": editingTemplateId = null; render(); break;
     case "save-template-edit": saveTemplateEdit(el.getAttribute("data-id")); break;
@@ -1930,6 +1998,75 @@ function handleInput(e){
     if(el.type!=="date"){ measurementEditDraft[el.getAttribute("data-field")] = el.value; }
   }
 }
+/* ===================== exercise reordering (drag handle, pointer events) =====================
+   Uses Pointer Events (not the HTML5 drag-and-drop API) because iOS Safari does not fire
+   dragstart/dragover for touch input at all - only mouse. Visual feedback during the drag is
+   done with direct style/class manipulation (not the app's render()), because render() replaces
+   the whole #app-root innerHTML, which would destroy the element holding pointer capture and
+   abort the gesture mid-drag. The array is only reordered, and render() only called once, on
+   pointerup. */
+var dragCtx = null;
+function exerciseDragStart(e){
+  var handle = e.target.closest && e.target.closest(".drag-handle");
+  if(!handle) return;
+  var card = handle.closest(".ex-card");
+  if(!card || !draft || !Array.isArray(draft.exercises)) return;
+  var idx = +card.getAttribute("data-idx");
+  if(isNaN(idx)) return;
+  e.preventDefault();
+  var list = card.parentNode;
+  var cards = Array.prototype.slice.call(list.querySelectorAll(".ex-card"));
+  dragCtx = {
+    idx: idx, targetIdx: idx, card: card, cards: cards,
+    startY: e.clientY,
+    rects: cards.map(function(c){ return c.getBoundingClientRect(); })
+  };
+  card.classList.add("dragging");
+  try{ handle.setPointerCapture(e.pointerId); }catch(err){}
+  handle.addEventListener("pointermove", exerciseDragMove);
+  handle.addEventListener("pointerup", exerciseDragEnd);
+  handle.addEventListener("pointercancel", exerciseDragEnd);
+}
+function exerciseDragMove(e){
+  if(!dragCtx) return;
+  var dy = e.clientY - dragCtx.startY;
+  dragCtx.card.style.transform = "translateY("+dy+"px)";
+  var rects = dragCtx.rects, idx = dragCtx.idx;
+  var centerY = rects[idx].top + rects[idx].height/2 + dy;
+  var newTarget = idx, i;
+  for(i=idx-1;i>=0;i--){
+    if(centerY < rects[i].top + rects[i].height/2){ newTarget = i; } else break;
+  }
+  if(newTarget===idx){
+    for(i=idx+1;i<rects.length;i++){
+      if(centerY > rects[i].top + rects[i].height/2){ newTarget = i; } else break;
+    }
+  }
+  if(newTarget!==dragCtx.targetIdx){
+    dragCtx.targetIdx = newTarget;
+    dragCtx.cards.forEach(function(c,ci){
+      if(c===dragCtx.card) return;
+      c.classList.toggle("drag-target", ci===newTarget);
+    });
+  }
+}
+function exerciseDragEnd(e){
+  if(!dragCtx) return;
+  var ctx = dragCtx;
+  dragCtx = null;
+  ctx.card.classList.remove("dragging");
+  ctx.card.style.transform = "";
+  ctx.cards.forEach(function(c){ c.classList.remove("drag-target"); });
+  e.target.removeEventListener("pointermove", exerciseDragMove);
+  e.target.removeEventListener("pointerup", exerciseDragEnd);
+  e.target.removeEventListener("pointercancel", exerciseDragEnd);
+  if(ctx.targetIdx!==ctx.idx && draft && Array.isArray(draft.exercises)){
+    var moved = draft.exercises.splice(ctx.idx,1)[0];
+    draft.exercises.splice(ctx.targetIdx,0,moved);
+    render();
+  }
+}
+document.addEventListener("pointerdown", exerciseDragStart);
 document.addEventListener("click", handleClick);
 document.addEventListener("change", handleChange);
 document.addEventListener("input", handleInput);
@@ -2059,6 +2196,40 @@ function deleteExercise(id){
     s.exercises = s.exercises.filter(function(e){return e.id!==id;});
     s.templates.forEach(function(t){ t.exerciseIds = t.exerciseIds.filter(function(id2){return id2!==id;}); });
   });
+  render();
+}
+function addMuscleGroupFromForm(){
+  var nameEl = document.getElementById("newMuscleGroupName");
+  var name = (nameEl.value||"").trim();
+  if(!name){ showToast("יש להזין שם קבוצה"); return; }
+  var dup = state.muscleGroups.some(function(g){ return g.label.trim()===name; });
+  if(dup){ showToast("כבר קיימת קבוצה בשם הזה"); return; }
+  var group = { id: uid("mg"), label:name };
+  persist(function(s){ s.muscleGroups.push(group); });
+  render();
+  showToast("קבוצת השריר נוספה");
+}
+function saveMuscleGroupEdit(id){
+  var nameEl = document.getElementById("editMgName");
+  var name = (nameEl.value||"").trim();
+  if(!name){ showToast("יש להזין שם קבוצה"); return; }
+  persist(function(s){
+    var g = s.muscleGroups.filter(function(x){return x.id===id;})[0];
+    if(g) g.label = name;
+  });
+  editingMuscleGroupId = null;
+  render();
+  showToast("הקבוצה עודכנה");
+}
+function deleteMuscleGroup(id){
+  var usedCount = state.exercises.filter(function(e){return e.muscle===id;}).length;
+  if(usedCount>0){
+    showToast("יש "+usedCount+" תרגילים בקבוצה הזו - שנה קודם את הקבוצה שלהם");
+    return;
+  }
+  var ok = window.confirm ? window.confirm("למחוק את קבוצת השריר הזו?") : true;
+  if(!ok) return;
+  persist(function(s){ s.muscleGroups = s.muscleGroups.filter(function(g){return g.id!==id;}); });
   render();
 }
 function addTemplateFromForm(){
