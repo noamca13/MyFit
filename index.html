@@ -101,7 +101,7 @@
     padding:11px 18px;border-radius:30px;font-size:13px;font-weight:700;z-index:100;box-shadow:0 6px 20px rgba(0,0,0,0.25);
     opacity:0;pointer-events:none;transition:opacity .25s, transform .25s;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(6px);}
-  .set-row{display:grid;grid-template-columns:22px 1fr 62px 54px 26px;gap:8px;align-items:center;padding:7px 2px;border-top:1px solid var(--divider);}
+  .set-row{display:grid;grid-template-columns:18px 1fr 56px 48px 24px 18px;gap:6px;align-items:center;padding:7px 2px;border-top:1px solid var(--divider);}
   .set-row input{text-align:center;padding:6px 2px;font-size:13px;}
   .check-circle{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--dash);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;}
   .check-circle.done{background:var(--accent);border-color:var(--accent);}
@@ -169,7 +169,8 @@ var ICONS = {
   x:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   moon:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>',
   repeat:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>',
-  grip:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="{c}"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>'
+  grip:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="{c}"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>',
+  sliders:'<svg width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="9" cy="18" r="2"/></svg>'
 };
 function icon(name, color, size){
   var t = ICONS[name] || "";
@@ -272,8 +273,8 @@ function buildExerciseLibrary(){
 }
 function buildTemplates(){
   return [
-    {id:"t-a", name:"אימון A - פלג גוף תחתון", exerciseIds:["squat","leg-press","lunges","calf-raise","plank"]},
-    {id:"t-b", name:"אימון B - פלג גוף עליון", exerciseIds:["bench-press","lat-pulldown","shoulder-press","bicep-curl","tricep-pushdown"]}
+    {id:"t-a", name:"אימון A - פלג גוף תחתון", exerciseIds:["squat","leg-press","lunges","calf-raise","plank"], targets:{}},
+    {id:"t-b", name:"אימון B - פלג גוף עליון", exerciseIds:["bench-press","lat-pulldown","shoulder-press","bicep-curl","tricep-pushdown"], targets:{}}
   ];
 }
 function generateSeedState(){
@@ -303,6 +304,8 @@ var detailMeasurementId = null, measurementEditDraft = null;
 var editingExerciseId = null;
 var editingMuscleGroupId = null;
 var editingTemplateId = null, editingTemplateName = null;
+var templateTargetDraft = null;
+var plannerMoveTargetDate = null;
 var plannerWeekOffset = 0;
 var plannerEditDate = null;
 var plannerDraft = null;
@@ -354,6 +357,9 @@ function ensurePlanFields(s){
         else if(e.id==="tricep-pushdown") e.muscle = "arms_back";
         else if(e.muscle==="arms") e.muscle = "arms_front";
       });
+    }
+    if(Array.isArray(s.templates)){
+      s.templates.forEach(function(t){ if(!t.targets || typeof t.targets!=="object") t.targets = {}; });
     }
   }
   return s;
@@ -654,16 +660,17 @@ function startPlannedToday(){
   else if(plan.type==="cardio") startCardioDraftFromPlan(plan);
 }
 function startStrengthDraftFromPlan(entry){
-  var exIds, tplId=null, tplName;
+  var exIds, tplId=null, tplName, tplTargets=null;
   if(entry.templateId){
     var tpl = state.templates.filter(function(t){return t.id===entry.templateId;})[0];
     if(!tpl){ startStrengthDraft(state.meta.lastTemplateId); return; }
-    exIds = tpl.exerciseIds; tplId = tpl.id; tplName = tpl.name;
+    exIds = tpl.exerciseIds; tplId = tpl.id; tplName = tpl.name; tplTargets = tpl.targets;
   } else {
     exIds = entry.exerciseIds||[];
     tplName = entry.customName || "אימון מתוכנן";
   }
-  draft = { templateId: tplId, templateName: tplName, notes:"", exercises: exIds.map(buildDraftExercise) };
+  draft = { templateId: tplId, templateName: tplName, notes:"",
+    exercises: exIds.map(function(exId){ return buildDraftExercise(exId, tplTargets && tplTargets[exId]); }) };
   view = "strength";
   render();
 }
@@ -689,8 +696,34 @@ function openPlanDay(dateKey){
     plannerDraft = { type:null, source:"template", templateId: state.templates[0]?state.templates[0].id:null, exerciseIds:[], customName:"", activity:"running", targetDistanceKm:"" };
   }
   plannerEditDate = dateKey;
+  plannerMoveTargetDate = null;
   view = "plan-day";
   render();
+}
+function movePlanToOtherDate(){
+  if(!plannerEditDate) return;
+  var toDate = plannerMoveTargetDate || plannerEditDate;
+  if(toDate===plannerEditDate){ showToast("בחר תאריך אחר מהתאריך הנוכחי"); return; }
+  var clash = state.plan.some(function(p){return p.date===toDate;});
+  if(clash){
+    var ok = window.confirm ? window.confirm("יש כבר תכנון לתאריך הזה - להחליף אותו?") : true;
+    if(!ok) return;
+  }
+  var fromDate = plannerEditDate;
+  persist(function(s){
+    var idx = -1;
+    for(var i=0;i<s.plan.length;i++){ if(s.plan[i].date===fromDate){ idx=i; break; } }
+    if(idx<0) return;
+    var entry = JSON.parse(JSON.stringify(s.plan[idx]));
+    entry.date = toDate;
+    delete entry.fromRoutine;
+    s.plan = s.plan.filter(function(p){ return p.date!==fromDate && p.date!==toDate; });
+    s.plan.push(entry);
+  });
+  plannerDraft = null; plannerEditDate = null; plannerMoveTargetDate = null;
+  view = "planner";
+  render();
+  showToast("התכנון הועבר לתאריך החדש");
 }
 function savePlanDay(){
   var d = plannerDraft;
@@ -1042,16 +1075,21 @@ function startStrengthDraft(templateId){
   if(!tpl){ showToast("אין תבניות אימון עדיין"); return; }
   draft = {
     templateId: tpl.id, templateName: tpl.name, notes:"",
-    exercises: tpl.exerciseIds.map(function(exId){ return buildDraftExercise(exId); })
+    exercises: tpl.exerciseIds.map(function(exId){ return buildDraftExercise(exId, tpl.targets && tpl.targets[exId]); })
   };
   view = "strength";
   render();
 }
-function buildDraftExercise(exId){
+function buildDraftExercise(exId, target){
   var ex = state.exercises.filter(function(e){return e.id===exId;})[0];
   var prevSets = lastSessionSets(exId);
-  var sets = (prevSets.length?prevSets:[{},{},{}]).map(function(){ return {weight:"", reps:"", done:false}; });
-  return { exerciseId: exId, name: ex?ex.name:exId, prevSets: prevSets, sets: sets };
+  var hasTarget = !!(target && (target.sets || target.reps || target.weight));
+  var setCount = (hasTarget && target.sets) ? target.sets : (prevSets.length || 3);
+  var sets = [];
+  for(var i=0;i<setCount;i++) sets.push({weight:"", reps:"", done:false});
+  return { exerciseId: exId, name: ex?ex.name:exId, prevSets: prevSets,
+    target: hasTarget ? {sets:target.sets||null, reps:target.reps||null, weight:target.weight||null} : null,
+    sets: sets };
 }
 function lastSessionSets(exId){
   var strength = state.workouts.filter(function(w){return w.type==="strength";})
@@ -1080,24 +1118,28 @@ function renderStrength(){
       (draft.exercises.length>1?'<div class="drag-handle" style="cursor:grab;touch-action:none;flex:none;padding:4px;margin:-4px;">'+icon("grip","var(--faint)",16)+'</div>':'')+
       '<div style="width:34px;height:34px;border-radius:10px;background:var(--accent-tint);display:flex;align-items:center;justify-content:center;flex:none;">'+icon("dumbbell","var(--accent-deep)",17)+'</div>'+
       '<div style="flex:1;"><div style="font-size:14.5px;font-weight:700;">'+escapeHtml(ex.name)+'</div>'+
-      '<div style="font-size:11px;color:var(--muted);margin-top:1px;">'+ex.sets.length+' סטים</div></div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-top:1px;">'+ex.sets.length+' סטים'+(ex.target?' · יעד':'')+'</div></div>'+
       '<button data-action="remove-exercise" data-idx="'+exIdx+'" style="background:none;border:none;cursor:pointer;">'+icon("x","var(--faint)",15)+'</button></div>';
 
-    html += '<div style="display:grid;grid-template-columns:22px 1fr 62px 54px 26px;gap:8px;padding:0 2px 6px;">'+
+    var showTarget = !!ex.target;
+    html += '<div style="display:grid;grid-template-columns:18px 1fr 56px 48px 24px 18px;gap:6px;padding:0 2px 6px;">'+
       '<div style="font-size:10px;color:var(--faint);font-weight:700;">#</div>'+
-      '<div style="font-size:10px;color:var(--faint);font-weight:700;">קודם</div>'+
+      '<div style="font-size:10px;color:var(--faint);font-weight:700;">'+(showTarget?"יעד":"קודם")+'</div>'+
       '<div style="font-size:10px;color:var(--faint);font-weight:700;text-align:center;">ק"ג</div>'+
-      '<div style="font-size:10px;color:var(--faint);font-weight:700;text-align:center;">חזרות</div><div></div></div>';
+      '<div style="font-size:10px;color:var(--faint);font-weight:700;text-align:center;">חזרות</div><div></div><div></div></div>';
 
     ex.sets.forEach(function(s, setIdx){
       var prev = ex.prevSets[setIdx];
-      var prevStr = prev ? (fmtNum(prev.weight)+" × "+prev.reps) : "-";
+      var refWeight = showTarget ? ex.target.weight : (prev?prev.weight:null);
+      var refReps = showTarget ? ex.target.reps : (prev?prev.reps:null);
+      var refStr = (refWeight!=null || refReps!=null) ? ((refWeight!=null?fmtNum(refWeight):"-")+" × "+(refReps!=null?refReps:"-")) : "-";
       html += '<div class="set-row">'+
         '<div style="font-size:12.5px;font-weight:700;color:var(--muted);">'+(setIdx+1)+'</div>'+
-        '<div style="font-size:11.5px;color:var(--faint);">'+prevStr+'</div>'+
-        '<input type="number" step="0.5" inputmode="decimal" placeholder="'+(prev?fmtNum(prev.weight):"-")+'" value="'+(s.weight===""?"":s.weight)+'" data-action="set-input" data-ex="'+exIdx+'" data-set="'+setIdx+'" data-field="weight">'+
-        '<input type="number" step="1" inputmode="numeric" placeholder="'+(prev?prev.reps:"-")+'" value="'+(s.reps===""?"":s.reps)+'" data-action="set-input" data-ex="'+exIdx+'" data-set="'+setIdx+'" data-field="reps">'+
+        '<div style="font-size:11.5px;color:var(--faint);">'+refStr+'</div>'+
+        '<input type="number" step="0.5" inputmode="decimal" placeholder="'+(refWeight!=null?fmtNum(refWeight):"-")+'" value="'+(s.weight===""?"":s.weight)+'" data-action="set-input" data-ex="'+exIdx+'" data-set="'+setIdx+'" data-field="weight">'+
+        '<input type="number" step="1" inputmode="numeric" placeholder="'+(refReps!=null?refReps:"-")+'" value="'+(s.reps===""?"":s.reps)+'" data-action="set-input" data-ex="'+exIdx+'" data-set="'+setIdx+'" data-field="reps">'+
         '<div class="check-circle'+(s.done?" done":"")+'" data-action="toggle-set" data-ex="'+exIdx+'" data-set="'+setIdx+'">'+(s.done?icon("check","var(--dark-onAccent)",12):"")+'</div>'+
+        (ex.sets.length>1?'<button data-action="remove-set" data-ex="'+exIdx+'" data-set="'+setIdx+'" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;">'+icon("x","var(--faint)",12)+'</button>':'<div></div>')+
         '</div>';
     });
 
@@ -1607,16 +1649,20 @@ function renderTemplates(){
         '<button class="btn-secondary" data-action="cancel-template-edit">ביטול</button>'+
         '</div></div>';
     } else {
+      var hasTargets = t.targets && Object.keys(t.targets).length>0;
       html += '<div class="card" style="margin-top:12px;padding:14px;">'+
         '<div class="row between"><span style="font-size:14px;font-weight:700;">'+escapeHtml(t.name)+'</span>'+
         '<div class="row" style="gap:6px;">'+
+        '<button data-action="edit-template-targets" data-id="'+t.id+'" style="background:none;border:none;cursor:pointer;">'+icon("sliders","var(--accent-deep)",15)+'</button>'+
         '<button data-action="edit-template" data-id="'+t.id+'" style="background:none;border:none;cursor:pointer;">'+icon("pencil","var(--muted)",15)+'</button>'+
         '<button data-action="delete-template" data-id="'+t.id+'" style="background:none;border:none;cursor:pointer;">'+icon("trash","var(--faint)",15)+'</button>'+
         '</div></div>'+
         '<div class="muted" style="font-size:11.5px;margin-top:6px;">'+t.exerciseIds.map(function(id){
           var e = state.exercises.filter(function(x){return x.id===id;})[0];
           return e?e.name:id;
-        }).join(" · ")+'</div></div>';
+        }).join(" · ")+'</div>'+
+        (hasTargets?'<div class="muted" style="font-size:10.5px;margin-top:3px;color:var(--accent-deep);">כולל סדר ויעדי אימון מוגדרים</div>':'')+
+        '</div>';
     }
   });
 
@@ -1632,6 +1678,35 @@ function renderTemplates(){
     '</div>'+
     '<button class="btn-secondary" style="width:100%;" data-action="add-template">הוסף תבנית</button></div>';
 
+  root().innerHTML = html;
+}
+function renderTemplateTargets(){
+  if(!templateTargetDraft){ view="templates"; render(); return; }
+  var t = state.templates.filter(function(x){return x.id===templateTargetDraft.templateId;})[0];
+  var html = viewHeaderSub("סדר ויעדים"+(t?" - "+escapeHtml(t.name):""), "", "templates");
+  html += '<div class="muted" style="font-size:11.5px;margin:10px 2px 4px;">גרור את הידית לשינוי סדר התרגילים באימון. סטים/חזרות/משקל הם יעד מומלץ להתחלה - אפשר להשאיר כל שדה ריק.</div>';
+
+  if(templateTargetDraft.items.length===0){
+    html += emptyState("dumbbell","אין תרגילים בתבנית הזו",30);
+  } else {
+    templateTargetDraft.items.forEach(function(it, idx){
+      html += '<div class="card ex-card" data-idx="'+idx+'" style="padding:12px 14px;">'+
+        '<div class="row" style="gap:10px;">'+
+        (templateTargetDraft.items.length>1?'<div class="drag-handle" style="cursor:grab;touch-action:none;flex:none;padding:4px;margin:-4px;">'+icon("grip","var(--faint)",16)+'</div>':'')+
+        '<div style="flex:1;font-size:13.5px;font-weight:700;">'+escapeHtml(it.name)+'</div>'+
+        '</div>'+
+        '<div class="row" style="gap:8px;margin-top:10px;">'+
+        '<div style="flex:1;"><label class="field-label" style="margin-bottom:3px;">סטים</label>'+
+        '<input type="number" step="1" inputmode="numeric" placeholder="-" value="'+(it.sets===""?"":it.sets)+'" data-action="tpl-target-field" data-idx="'+idx+'" data-field="sets" style="text-align:center;"></div>'+
+        '<div style="flex:1;"><label class="field-label" style="margin-bottom:3px;">חזרות</label>'+
+        '<input type="number" step="1" inputmode="numeric" placeholder="-" value="'+(it.reps===""?"":it.reps)+'" data-action="tpl-target-field" data-idx="'+idx+'" data-field="reps" style="text-align:center;"></div>'+
+        '<div style="flex:1;"><label class="field-label" style="margin-bottom:3px;">ק"ג</label>'+
+        '<input type="number" step="0.5" inputmode="decimal" placeholder="-" value="'+(it.weight===""?"":it.weight)+'" data-action="tpl-target-field" data-idx="'+idx+'" data-field="weight" style="text-align:center;"></div>'+
+        '</div></div>';
+    });
+  }
+  html += '<div style="height:90px;"></div>';
+  html += '<div class="sticky-footer"><button class="btn-primary" data-action="save-template-targets">שמור</button></div>';
   root().innerHTML = html;
 }
 /* ===================== planner views ===================== */
@@ -1755,8 +1830,18 @@ function renderPlanDay(){
     html += '<div class="muted" style="text-align:center;margin-top:30px;font-size:13px;">בחר סוג יום כדי להמשיך</div>';
   }
 
-  html += '<div style="height:100px;"></div>';
   var hasExplicit = state.plan.some(function(p){return p.date===plannerEditDate;});
+  if(hasExplicit && d.type && d.type!=="rest"){
+    html += '<div class="card" style="margin-top:16px;padding:14px;">'+
+      '<div class="row" style="gap:8px;margin-bottom:8px;">'+icon("calendar","var(--muted)",16)+
+      '<span style="font-size:13px;font-weight:700;">האימון בוצע/יבוצע ביום אחר?</span></div>'+
+      '<div class="muted" style="font-size:11.5px;margin-bottom:10px;">מעביר את התכנון הזה לתאריך שתבחר, ומנקה אותו מהתאריך הנוכחי - כדי שהמעקב אחר עמידה בתוכנית יישאר נכון.</div>'+
+      dateFieldHtml(plannerMoveTargetDate || plannerEditDate, "plan-move-date", "date")+
+      '<button class="btn-secondary" style="width:100%;margin-top:10px;" data-action="confirm-move-plan">העבר לתאריך שנבחר</button>'+
+      '</div>';
+  }
+
+  html += '<div style="height:100px;"></div>';
   html += '<div class="sticky-footer">'+
     (hasExplicit ? '<button class="btn-secondary" style="width:100%;margin-bottom:8px;" data-action="clear-plan-day">מחק תכנון ליום זה</button>' : '')+
     '<button class="btn-primary" data-action="save-plan-day">שמור תכנון</button></div>';
@@ -1805,6 +1890,7 @@ function render(){
   else if(view==="profile") renderProfile();
   else if(view==="exercises") renderExercises();
   else if(view==="templates") renderTemplates();
+  else if(view==="template-targets") renderTemplateTargets();
   else if(view==="measure-fields") renderMeasureFields();
   else if(view==="planner") renderPlanner();
   else if(view==="plan-day") renderPlanDay();
@@ -1818,8 +1904,8 @@ function render(){
     void root().offsetWidth; /* force reflow so the animation restarts */
     root().classList.add("view-enter");
     lastRenderedView = view;
+    window.scrollTo(0,0);
   }
-  window.scrollTo(0,0);
 }
 
 /* ===================== event handling ===================== */
@@ -1844,6 +1930,7 @@ function handleClick(e){
     case "plan-activity": plannerDraft.activity = el.getAttribute("data-activity"); render(); break;
     case "save-plan-day": savePlanDay(); break;
     case "clear-plan-day": clearPlanDay(); break;
+    case "confirm-move-plan": movePlanToOtherDate(); break;
     case "save-routine": saveWeekAsRoutine(); break;
     case "clear-routine": clearRoutineFn(); break;
     case "cancel-strength": draft=null; view="home"; render(); break;
@@ -1861,6 +1948,12 @@ function handleClick(e){
     case "add-set": {
       var exI2=+el.getAttribute("data-ex");
       draft.exercises[exI2].sets.push({weight:"",reps:"",done:false});
+      render();
+      break;
+    }
+    case "remove-set": {
+      var exI4=+el.getAttribute("data-ex"), setI4=+el.getAttribute("data-set");
+      if(draft.exercises[exI4].sets.length>1) draft.exercises[exI4].sets.splice(setI4,1);
       render();
       break;
     }
@@ -1925,6 +2018,8 @@ function handleClick(e){
     case "delete-exercise": deleteExercise(el.getAttribute("data-id")); break;
     case "add-template": addTemplateFromForm(); break;
     case "delete-template": deleteTemplate(el.getAttribute("data-id")); break;
+    case "edit-template-targets": openTemplateTargets(el.getAttribute("data-id")); break;
+    case "save-template-targets": saveTemplateTargets(); break;
   }
 }
 function handleChange(e){
@@ -1935,7 +2030,7 @@ function handleChange(e){
     var tpl = state.templates.filter(function(t){return t.id===el.value;})[0];
     if(tpl){
       draft.templateId = tpl.id; draft.templateName = tpl.name;
-      draft.exercises = tpl.exerciseIds.map(function(exId){ return buildDraftExercise(exId); });
+      draft.exercises = tpl.exerciseIds.map(function(exId){ return buildDraftExercise(exId, tpl.targets && tpl.targets[exId]); });
       render();
     }
   } else if(action==="add-exercise-select"){
@@ -1953,6 +2048,9 @@ function handleChange(e){
     else { workoutEditDraft[wfField] = el.value; }
   } else if(action==="meas-edit-field" && el.tagName==="INPUT" && el.type==="date"){
     measurementEditDraft.date = combineDateKeepTime(el.value, measurementEditDraft.date);
+    render();
+  } else if(action==="plan-move-date"){
+    plannerMoveTargetDate = el.value;
     render();
   } else if(action==="profile-field"){
     var field = el.getAttribute("data-field");
@@ -1996,6 +2094,9 @@ function handleInput(e){
     workoutEditDraft.exercises[wex4].sets[wset4][wfield4] = el.value===""?0:parseFloat(el.value);
   } else if(action==="meas-edit-field"){
     if(el.type!=="date"){ measurementEditDraft[el.getAttribute("data-field")] = el.value; }
+  } else if(action==="tpl-target-field"){
+    var tIdx=+el.getAttribute("data-idx"), tField=el.getAttribute("data-field");
+    templateTargetDraft.items[tIdx][tField] = el.value===""?"":parseFloat(el.value);
   }
 }
 /* ===================== exercise reordering (drag handle, pointer events) =====================
@@ -2006,11 +2107,19 @@ function handleInput(e){
    abort the gesture mid-drag. The array is only reordered, and render() only called once, on
    pointerup. */
 var dragCtx = null;
+function activeDragArray(){
+  /* the exercise-reordering drag handle is used both on the live/draft workout screen
+     (reordering draft.exercises) and on the template order+targets screen (reordering
+     templateTargetDraft.items) - this picks whichever array the current view should mutate. */
+  if(view==="strength" && draft && Array.isArray(draft.exercises)) return draft.exercises;
+  if(view==="template-targets" && templateTargetDraft && Array.isArray(templateTargetDraft.items)) return templateTargetDraft.items;
+  return null;
+}
 function exerciseDragStart(e){
   var handle = e.target.closest && e.target.closest(".drag-handle");
   if(!handle) return;
   var card = handle.closest(".ex-card");
-  if(!card || !draft || !Array.isArray(draft.exercises)) return;
+  if(!card || !activeDragArray()) return;
   var idx = +card.getAttribute("data-idx");
   if(isNaN(idx)) return;
   e.preventDefault();
@@ -2060,9 +2169,10 @@ function exerciseDragEnd(e){
   e.target.removeEventListener("pointermove", exerciseDragMove);
   e.target.removeEventListener("pointerup", exerciseDragEnd);
   e.target.removeEventListener("pointercancel", exerciseDragEnd);
-  if(ctx.targetIdx!==ctx.idx && draft && Array.isArray(draft.exercises)){
-    var moved = draft.exercises.splice(ctx.idx,1)[0];
-    draft.exercises.splice(ctx.targetIdx,0,moved);
+  var arr = activeDragArray();
+  if(ctx.targetIdx!==ctx.idx && arr){
+    var moved = arr.splice(ctx.idx,1)[0];
+    arr.splice(ctx.targetIdx,0,moved);
     render();
   }
 }
@@ -2238,7 +2348,7 @@ function addTemplateFromForm(){
   var checks = Array.prototype.slice.call(document.querySelectorAll(".tpl-ex-check:checked"));
   var ids = checks.map(function(c){return c.value;});
   if(!name || ids.length===0){ showToast("יש להזין שם ולבחור לפחות תרגיל אחד"); return; }
-  var tpl = { id: uid("tpl"), name:name, exerciseIds: ids };
+  var tpl = { id: uid("tpl"), name:name, exerciseIds: ids, targets: {} };
   persist(function(s){ s.templates.push(tpl); });
   render();
   showToast("התבנית נוספה");
@@ -2247,15 +2357,61 @@ function saveTemplateEdit(id){
   var nameEl = document.getElementById("editTplName");
   var name = (nameEl.value||"").trim();
   var checks = Array.prototype.slice.call(document.querySelectorAll(".tpl-edit-ex-check:checked"));
-  var ids = checks.map(function(c){return c.value;});
-  if(!name || ids.length===0){ showToast("יש להזין שם ולבחור לפחות תרגיל אחד"); return; }
+  var checkedIds = checks.map(function(c){return c.value;});
+  if(!name || checkedIds.length===0){ showToast("יש להזין שם ולבחור לפחות תרגיל אחד"); return; }
   persist(function(s){
     var t = s.templates.filter(function(x){return x.id===id;})[0];
-    if(t){ t.name = name; t.exerciseIds = ids; }
+    if(t){
+      t.name = name;
+      /* preserve the existing custom order (and targets) for exercises that stay checked -
+         rebuilding the order from checkbox DOM order here would silently discard any
+         reordering/targets set on the "סדר ויעדים" screen. Newly-checked exercises are
+         appended at the end. */
+      var oldOrder = t.exerciseIds||[];
+      var kept = oldOrder.filter(function(exId){ return checkedIds.indexOf(exId)>=0; });
+      var added = checkedIds.filter(function(exId){ return oldOrder.indexOf(exId)<0; });
+      t.exerciseIds = kept.concat(added);
+      if(!t.targets) t.targets = {};
+      Object.keys(t.targets).forEach(function(exId){ if(checkedIds.indexOf(exId)<0) delete t.targets[exId]; });
+    }
   });
   editingTemplateId = null;
   render();
   showToast("התבנית עודכנה");
+}
+function openTemplateTargets(id){
+  var t = state.templates.filter(function(x){return x.id===id;})[0];
+  if(!t) return;
+  templateTargetDraft = {
+    templateId: t.id,
+    items: t.exerciseIds.map(function(exId){
+      var tgt = (t.targets && t.targets[exId]) || {};
+      var ex = state.exercises.filter(function(e){return e.id===exId;})[0];
+      return { exerciseId: exId, name: ex?ex.name:exId, sets: tgt.sets||"", reps: tgt.reps||"", weight: tgt.weight||"" };
+    })
+  };
+  view = "template-targets";
+  render();
+}
+function saveTemplateTargets(){
+  var d = templateTargetDraft;
+  if(!d) return;
+  persist(function(s){
+    var t = s.templates.filter(function(x){return x.id===d.templateId;})[0];
+    if(t){
+      t.exerciseIds = d.items.map(function(i){return i.exerciseId;});
+      t.targets = {};
+      d.items.forEach(function(i){
+        if(i.sets!=="" || i.reps!=="" || i.weight!==""){
+          t.targets[i.exerciseId] = { sets: i.sets===""?null:i.sets, reps: i.reps===""?null:i.reps, weight: i.weight===""?null:i.weight };
+        }
+      });
+    }
+  });
+  templateTargetDraft = null;
+  view = "templates";
+  render();
+  showToast("היעדים נשמרו");
 }
 function deleteTemplate(id){
   var ok = window.confirm ? window.confirm("למחוק את התבנית?") : true;
