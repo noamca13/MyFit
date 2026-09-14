@@ -635,22 +635,31 @@ function computeAdherence(offset){
   return {planned:planned, done:done};
 }
 function homeHeroInfo(plan, streak, doneToday){
-  if(plan && plan.type==="strength"){
+  if(plan && (plan.type==="strength" || plan.type==="cardio")){
     var info = planTypeInfo(plan);
-    return { bg:"var(--accent)", iconName:(doneToday?"check":"dumbbell"), iconColor:"var(--dark-onAccent)", chipBg:"rgba(0,0,0,0.08)", textColor:"var(--dark-onAccent)",
-      title:"היום: אימון כוח", subtitle: doneToday ? (info.label+" · בוצע היום, אפשר לתעד עוד") : (info.label+" · הקש כדי להתחיל"), clickable:true };
-  }
-  if(plan && plan.type==="cardio"){
-    var info2 = planTypeInfo(plan);
-    return { bg:"var(--cardio)", iconName:(doneToday?"check":"pulse"), iconColor:"#FFFFFF", chipBg:"rgba(255,255,255,0.2)", textColor:"#FFFFFF",
-      title:"היום: אימון אירובי", subtitle: doneToday ? (info2.label+" · בוצע היום, אפשר לתעד עוד") : (info2.label+" · הקש כדי להתחיל"), clickable:true };
+    /* once today's planned workout is logged, the hero switches to a closed/done
+       state: muted tint (not the bright CTA green/blue), a plain shadow instead of
+       the glowing shadow-lg, no forward-chevron, and not clickable - so it reads as
+       a completed status rather than an invitation to "start" something already
+       done. Logging an additional session of the same type still works via the
+       "התחל עכשיו" quick-action tiles further down the page. */
+    if(doneToday){
+      return { bg:"var(--accent-tint)", iconName:"check", iconColor:"var(--accent-deep)", chipBg:"var(--card)", textColor:"var(--text)",
+        shadow:"var(--shadow)", title:"האימון היום בוצע", subtitle: info.label+" · כל הכבוד!", clickable:false };
+    }
+    if(plan.type==="strength"){
+      return { bg:"var(--accent)", iconName:"dumbbell", iconColor:"var(--dark-onAccent)", chipBg:"rgba(0,0,0,0.08)", textColor:"var(--dark-onAccent)",
+        shadow:"var(--shadow-lg)", title:"היום: אימון כוח", subtitle: info.label+" · הקש כדי להתחיל", clickable:true };
+    }
+    return { bg:"var(--cardio)", iconName:"pulse", iconColor:"#FFFFFF", chipBg:"rgba(255,255,255,0.2)", textColor:"#FFFFFF",
+      shadow:"var(--shadow-lg)", title:"היום: אימון אירובי", subtitle: info.label+" · הקש כדי להתחיל", clickable:true };
   }
   if(plan && plan.type==="rest"){
     return { bg:"var(--restday-bg)", iconName:"moon", iconColor:"var(--muted)", chipBg:"var(--restday-chip)", textColor:"var(--restday-text)",
-      title:"היום יום מנוחה", subtitle:"מגיע לך לנוח, תתאושש טוב לקראת האימון הבא", clickable:false };
+      shadow:"var(--shadow)", title:"היום יום מנוחה", subtitle:"מגיע לך לנוח, תתאושש טוב לקראת האימון הבא", clickable:false };
   }
   return { bg:"var(--accent)", iconName:"flame", iconColor:"var(--dark-onAccent)", chipBg:"rgba(0,0,0,0.08)", textColor:"var(--dark-onAccent)",
-    title:streak+" ימים ברצף", subtitle:(streak>0?"כל הכבוד! תמשיך ככה":"בוא נתחיל רצף חדש"), clickable:false };
+    shadow:"var(--shadow-lg)", title:streak+" ימים ברצף", subtitle:(streak>0?"כל הכבוד! תמשיך ככה":"בוא נתחיל רצף חדש"), clickable:false };
 }
 function startPlannedToday(){
   var todayKey = dateKeyFromDate(new Date());
@@ -863,7 +872,7 @@ function renderHome(){
     '<button class="iconbtn" style="width:40px;height:40px;" data-action="open-profile">'+icon("user","var(--text)",18)+'</button>'+
     '</div></div>';
 
-  html += '<button class="card-lg" style="margin-top:14px;background:'+hero.bg+';display:flex;align-items:center;gap:14px;box-shadow:var(--shadow-lg);width:100%;border:none;cursor:'+(hero.clickable?"pointer":"default")+';" data-action="'+(hero.clickable?"start-planned-today":"noop")+'">'+
+  html += '<button class="card-lg" style="margin-top:14px;background:'+hero.bg+';display:flex;align-items:center;gap:14px;box-shadow:'+hero.shadow+';width:100%;border:none;cursor:'+(hero.clickable?"pointer":"default")+';" data-action="'+(hero.clickable?"start-planned-today":"noop")+'">'+
     '<div style="width:44px;height:44px;border-radius:13px;background:'+hero.chipBg+';display:flex;align-items:center;justify-content:center;flex:none;">'+icon(hero.iconName,hero.iconColor,22)+'</div>'+
     '<div style="flex:1;color:'+hero.textColor+';text-align:right;"><div class="hd" style="font-size:18.5px;font-weight:900;line-height:1.2;">'+hero.title+'</div>'+
     '<div style="font-size:12px;opacity:.75;margin-top:5px;">'+hero.subtitle+'</div></div>'+
